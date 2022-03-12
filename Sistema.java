@@ -78,6 +78,25 @@ public class Sistema {
 				// EXECUTA INSTRUCAO NO ir
 					switch (ir.opc) { // para cada opcode, sua execução
 
+					case JMP: //  PC ← k
+						pc = ir.p;
+					 	break;
+
+					case JMPIG: // If Rc > 0 Then PC ← Rs Else PC ← PC +1
+						 if (reg[ir.r2] > 0) {
+							 pc = reg[ir.r1];
+						 } else {
+							 pc++;
+						 }
+						 break;
+					case JMPIE: // If Rc = 0 Then PC ← Rs Else PC ← PC +1
+						 if (reg[ir.r2] == 0) {
+							 pc = reg[ir.r1];
+						 } else {
+							 pc++;
+						 }
+						 break;	 
+
 						case LDI: // Rd ← k
 							reg[ir.r1] = ir.p;
 							pc++;
@@ -115,26 +134,6 @@ public class Sistema {
 						case SUB: // Rd ← Rd - Rs
 							reg[ir.r1] = reg[ir.r1] - reg[ir.r2];
 							pc++;
-							break;
-
-						case JMP: //  PC ← k
-								pc = ir.p;
-						     break;
-						
-						case JMPIG: // If Rc > 0 Then PC ← Rs Else PC ← PC +1
-							if (reg[ir.r2] > 0) {
-								pc = reg[ir.r1];
-							} else {
-								pc++;
-							}
-							break;
-
-						case JMPIE: // If Rc = 0 Then PC ← Rs Else PC ← PC +1
-							if (reg[ir.r2] == 0) {
-								pc = reg[ir.r1];
-							} else {
-								pc++;
-							}
 							break;
 
 						case STOP: // por enquanto, para execucao
