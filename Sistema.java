@@ -78,38 +78,66 @@ public class Sistema {
 				// EXECUTA INSTRUCAO NO ir
 					switch (ir.opc) { // para cada opcode, sua execução
 
-					case JMP: //  PC ← k
-						pc = ir.p;
-					 	break;
-
-					case JMPIG: // If Rc > 0 Then PC ← Rs Else PC ← PC +1
-						 if (reg[ir.r2] > 0) {
-							 pc = reg[ir.r1];
-						 } else {
-							 pc++;
-						 }
-						 break;
-					case JMPIE: // If Rc = 0 Then PC ← Rs Else PC ← PC +1
-						 if (reg[ir.r2] == 0) {
-							 pc = reg[ir.r1];
-						 } else {
-							 pc++;
-						 }
-						 break;	 
-
-						case LDI: // Rd ← k
-							reg[ir.r1] = ir.p;
-							pc++;
+				//Instruções de JUMP		
+						case JMP: //  PC ← k
+								pc = ir.p;
+						     break;
+						
+						case JMPI: // Pc ← 	Rs
+								pc =  reg[ir.r1];
+							break;	
+						
+						case JMPIG: // If Rc > 0 Then PC ← Rs Else PC ← PC +1
+							if (reg[ir.r2] > 0) {
+								pc = reg[ir.r1];
+							} else {
+								pc++;
+							}
 							break;
 
-						case STD: // [A] ← Rs
-							    m[ir.p].opc = Opcode.DATA;
-							    m[ir.p].p = reg[ir.r1];
-							    pc++;
+						case JMPIL: //if Rc < 0 then PC <- Rs Else PC <-  PC +1
+							if(reg[ir.r2] < 0){
+								pc = reg[ir.r1];
+							} else {
+								pc++;
+							}
+							break;	
+
+						case JMPIE: // If Rc = 0 Then PC ← Rs Else PC ← PC +1
+							if (reg[ir.r2] == 0) {
+								pc = reg[ir.r1];
+							} else {
+								pc++;
+							}
+							break;
+						
+						case JMPIM: // PC ← [A]
+
+						case JMPIGM: // if Rc > 0 then PC ←  [A] Else PC ←  PC + 1
+						
+						case JMPILM: // if Rc < 0 then PC ←  [A] Else PC ←  PC + 1
+
+						case JMPIEM: // if Rc = 0 then PC ←  [A] Else PC ←  PC + 1
+						
+				//Instruções Aritiméticas
+
+						case ADDI: // Rd ← Rd + k
+							reg[ir.r1] = reg[ir.r1] + ir.p;
+							pc++;
 						break;
+
+						case SUBI: // Rd ← Rd - k
+							reg[ir.r1] = reg[ir.r1] - ir.p;
+							pc++;
+						break;	
 
 						case ADD: // Rd ← Rd + Rs
 							reg[ir.r1] = reg[ir.r1] + reg[ir.r2];
+							pc++;
+							break;
+
+						case SUB: // Rd ← Rd - Rs
+							reg[ir.r1] = reg[ir.r1] - reg[ir.r2];
 							pc++;
 							break;
 
@@ -120,22 +148,31 @@ public class Sistema {
 							pc++;
 							break;
 
-						case ADDI: // Rd ← Rd + k
-							reg[ir.r1] = reg[ir.r1] + ir.p;
+				//Instruções de movimentação
+
+						case LDI: // Rd ← k
+							reg[ir.r1] = ir.p;
 							pc++;
 							break;
+						
+						case LDD: // Rd ← [A]
 
-						case STX: // [Rd] ←Rs
+						case STD: // [A] ← Rs
+							    m[ir.p].opc = Opcode.DATA;
+							    m[ir.p].p = reg[ir.r1];
+							    pc++;
+						break;
+
+						case LDX: // Rd ←  [Rs]
+				
+						case STX: // [Rd] ← Rs
 							    m[reg[ir.r1]].opc = Opcode.DATA;      
 							    m[reg[ir.r1]].p = reg[ir.r2];          
 								pc++;
 							break;
 
-						case SUB: // Rd ← Rd - Rs
-							reg[ir.r1] = reg[ir.r1] - reg[ir.r2];
-							pc++;
-							break;
-
+						case SWAP: // T ← Ra | Ra ← Rb | Rb ← T
+						
 						case STOP: // por enquanto, para execucao
 							break;
 						default:
