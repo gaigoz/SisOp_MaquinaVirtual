@@ -286,9 +286,9 @@ public class Sistema {
 	    //s.roda(progs.fibonacci10);           // "progs" significa acesso/referencia ao programa em memoria secundaria
 		//s.roda(progs.progMinimo);
 		//s.roda(progs.fatorial);
-		s.roda(progs.NewInstructionTester);
+		//s.roda(progs.NewInstructionTester);
 	    //s.roda(progs.PA);
-		//s.roda(progs.PB);
+		s.roda(progs.PB);
 	}
     // -------------------------------------------------------------------------------------------------------
     // --------------- TUDO ABAIXO DE MAIN Ãƒâ€° AUXILIAR PARA FUNCIONAMENTO DO SISTEMA - nao faz parte 
@@ -389,7 +389,7 @@ public class Sistema {
 				new Word(Opcode.STOP, -1, -1, -1),  // 29	Termina a execucao
 				// Area de dados
 				new Word(Opcode.DATA, -1, -1, -1),	// 30
-				new Word(Opcode.DATA, -1, -1, 10),	// 31   <----- Se o valor armazenado nesta pos. de mem. for menor que 0, coloca -1 no inicio da pos. de mem. para saida (pos 25). Se for maior, este eh o num. de valores da sequencia
+				new Word(Opcode.DATA, -1, -1, 8),	// 31   <----- Se o valor armazenado nesta pos. de mem. for menor que 0, coloca -1 no inicio da pos. de mem. para saida (pos 25). Se for maior, este eh o num. de valores da sequencia
 				new Word(Opcode.DATA, -1, -1, -1),	// 32
 				new Word(Opcode.DATA, -1, -1, -1),  // 33	Sequencia salva desta posicao.....
 				new Word(Opcode.DATA, -1, -1, -1),	// 34
@@ -408,14 +408,14 @@ public class Sistema {
 			   
 			   new Word(Opcode.JMPILM, -1, 0, 11),	// 1	Se R0<0, pula para a linha 11 do codigo
 				  
-			   new Word(Opcode.LDI, 1, -1, 1),      // 2   
-			   new Word(Opcode.LDI, 6, -1, 1),      // 3   	
-			   new Word(Opcode.LDI, 7, -1, 8),      // 4   	
-			   new Word(Opcode.JMPIE, 7, 0, 0),     // 5   	
-			   new Word(Opcode.MULT, 1, 0, -1),     // 6   	
-			   new Word(Opcode.SUB, 0, 6, -1),      // 7   	 
-			   new Word(Opcode.JMP, -1, -1, 4),     // 8   
-			   new Word(Opcode.STD, 1, -1, 15),     // 9   
+			   new Word(Opcode.LDI, 1, -1, 1),      // 2    R1 recebe 1 para multiplicar (por R0)
+			   new Word(Opcode.LDI, 6, -1, 1),      // 3	R6 recebe 1 para ser o decremento   	
+			   new Word(Opcode.LDI, 7, -1, 9),     // 4   	R7 tem posicao do save anterior ao stop do programa = 9
+			   new Word(Opcode.JMPIE, 7, 0, 0),     // 5   	Se R0=0 pula para R7(=9)
+			   new Word(Opcode.MULT, 1, 0, -1),     // 6   	R1 = R1 * R0
+			   new Word(Opcode.SUB, 0, 6, -1),      // 7   	Decrementa R0 (R0-1)
+			   new Word(Opcode.JMP, -1, -1, 4),     // 8    Vai para a posicao 4
+			   new Word(Opcode.STD, 1, -1, 15),     // 9    Coloca valor de R1 na posicao 15
 			   new Word(Opcode.STOP, -1, -1, -1),   // 10   Finaliza a execucao do programa
 			   
 			   new Word(Opcode.LDI, 1, -1, -1),		// 11	
