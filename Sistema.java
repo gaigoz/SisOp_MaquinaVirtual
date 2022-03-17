@@ -1,8 +1,8 @@
-// PUCRS - Escola PolitÃ©cnica - Sistemas Operacionais
+// PUCRS - Escola PolitÃƒÂ©cnica - Sistemas Operacionais
 // Prof. Fernando Dotti
-// CÃ³digo fornecido como parte da soluÃ§Ã£o do projeto de Sistemas Operacionais
+// CÃƒÂ³digo fornecido como parte da soluÃƒÂ§ÃƒÂ£o do projeto de Sistemas Operacionais
 //
-// Fase 1 - mÃ¡quina virtual (vide enunciado correspondente)
+// Fase 1 - mÃƒÂ¡quina virtual (vide enunciado correspondente)
 //
 
 import java.util.*;
@@ -37,7 +37,7 @@ public class Sistema {
 	}
 
 	public class CPU {
-							// caracterÃ­stica do processador: contexto da CPU ...
+							// caracterÃƒÂ­stica do processador: contexto da CPU ...
 		private int pc; 			// ... composto de program counter,
 		private Word ir; 			// instruction register,
 		private int[] reg;       	// registradores da CPU
@@ -46,7 +46,7 @@ public class Sistema {
 			
 		public CPU(Word[] _m) {     // ref a MEMORIA e interrupt handler passada na criacao da CPU
 			m = _m; 				// usa o atributo 'm' para acessar a memoria.
-			reg = new int[8]; 		// aloca o espaÃ§o dos registradores
+			reg = new int[8]; 		// aloca o espaÃƒÂ§o dos registradores
 		}
 
 		public void setContext(int _pc) {  // no futuro esta funcao vai ter que ser 
@@ -76,19 +76,19 @@ public class Sistema {
 					//if debug
 					    showState();
 				// EXECUTA INSTRUCAO NO ir
-					switch (ir.opc) { // para cada opcode, sua execuÃ§Ã£o
+					switch (ir.opc) { // para cada opcode, sua execuÃƒÂ§ÃƒÂ£o
 
-						case LDI: // Rd â†� k
+						case LDI: // Rd Ã¢â€ ï¿½ k
 							reg[ir.r1] = ir.p;
 							pc++;
 							break;
 							
-						case LDD: // Rd <- [A]				// Instrução nova - pode não estar funcionando corretamente
+						case LDD: // Rd <- [A]				// InstruÃ§Ã£o nova - pode nÃ£o estar funcionando corretamente
 							reg[ir.r1] = m[ir.p].p; 
 							pc++;
 							break;
 							
-						case LDX: // RD <- [RS]				// Instrução nova - pode não estar funcionando corretamente
+						case LDX: // RD <- [RS]				// InstruÃ§Ã£o nova - pode nÃ£o estar funcionando corretamente
 							reg[ir.r1] = reg[ir.r2];
 							pc++;
 							break;
@@ -99,19 +99,19 @@ public class Sistema {
 							pc++;
 							break;
 
-						case ADD: // Rd â†� Rd + Rs
+						case ADD: // Rd Ã¢â€ ï¿½ Rd + Rs
 							reg[ir.r1] = reg[ir.r1] + reg[ir.r2];
 							pc++;
 							break;
 
-						case MULT: // Rd â†� Rd * Rs
+						case MULT: // Rd Ã¢â€ ï¿½ Rd * Rs
 							reg[ir.r1] = reg[ir.r1] * reg[ir.r2];
 							// gera um overflow
 							// -->  LIGA INT  (1)
 							pc++;
 							break;
 
-						case ADDI: // Rd â†� Rd + k
+						case ADDI: // Rd Ã¢â€ ï¿½ Rd + k
 							reg[ir.r1] = reg[ir.r1] + ir.p;
 							pc++;
 							break;
@@ -122,17 +122,17 @@ public class Sistema {
 								pc++;
 							break;
 
-						case SUB: // Rd â†� Rd - Rs
+						case SUB: // Rd Ã¢â€ ï¿½ Rd - Rs
 							reg[ir.r1] = reg[ir.r1] - reg[ir.r2];
 							pc++;
 							break;
 							
-						case SUBI: // RD <- RD - k				// Instrução nova - pode não estar funcionando corretamente
+						case SUBI: // RD <- RD - k				// InstruÃ§Ã£o nova - pode nÃ£o estar funcionando corretamente
 							reg[ir.r1] = reg[ir.r1] - ir.p;
 							pc++;
 							break;	
 
-						case JMP: //  PC â†� k
+						case JMP: //  PC Ã¢â€ ï¿½ k
 							pc = ir.p;
 						    break;
 						
@@ -144,7 +144,7 @@ public class Sistema {
 							}
 							break;
 							
-						case JMPIGM: // If RC > 0 then PC <- [A] else PC++		// Instrução nova - pode não estar funcionando corretamente
+						case JMPIGM: // If RC > 0 then PC <- [A] else PC++		// InstruÃ§Ã£o nova - pode nÃ£o estar funcionando corretamente
 							if (reg[ir.r2] > 0) {
 								pc = ir.p;
 							} else {
@@ -152,7 +152,7 @@ public class Sistema {
 							}
 							break;
 
-						case JMPIE: // If Rc = 0 Then PC â†� Rs Else PC â†� PC +1
+						case JMPIE: // If Rc = 0 Then PC Ã¢â€ ï¿½ Rs Else PC Ã¢â€ ï¿½ PC +1
 							if (reg[ir.r2] == 0) {
 								pc = reg[ir.r1];
 							} else {
@@ -160,7 +160,7 @@ public class Sistema {
 							}
 							break;
 							
-						case JMPIEM: // If RC = 0 then PC <- k else PC++  	// Instrução nova - pode não estar funcionando corretamente
+						case JMPIEM: // If RC = 0 then PC <- k else PC++  	// InstruÃ§Ã£o nova - pode nÃ£o estar funcionando corretamente
 							if (reg[ir.r2] == 0) {
 								pc = ir.p;
 							} else {
@@ -168,7 +168,7 @@ public class Sistema {
 							}
 							break;
 							
-						case JMPILM: // If RC < 0 then PC <- k else PC++	// Instrução nova - pode não estar funcionando corretamente
+						case JMPILM: // If RC < 0 then PC <- k else PC++	// InstruÃ§Ã£o nova - pode nÃ£o estar funcionando corretamente
 							if (reg[ir.r2] < 0) {
 								pc = ir.p;
 							} else {
@@ -183,7 +183,7 @@ public class Sistema {
 							// liga interrup (2)
 					}
 				
-				// VERIFICA INTERRUPÃ‡ÃƒO !!! - TERCEIRA FASE DO CICLO DE INSTRUÃ‡Ã•ES
+				// VERIFICA INTERRUPÃƒâ€¡ÃƒÆ’O !!! - TERCEIRA FASE DO CICLO DE INSTRUÃƒâ€¡Ãƒâ€¢ES
 				if (ir.opc==Opcode.STOP) {   
 					break; // break sai do loop da cpu
 
@@ -205,12 +205,12 @@ public class Sistema {
         public CPU cpu;    
 
         public VM(){    
-	     // memÃ³ria
+	     // memÃƒÂ³ria
   		 	 tamMem = 1024;
 			 m = new Word[tamMem]; // m ee a memoria
 			 for (int i=0; i<tamMem; i++) { m[i] = new Word(Opcode.___,-1,-1,-1); };
 	  	 // cpu
-			 cpu = new CPU(m);   // cpu acessa memÃ³ria
+			 cpu = new CPU(m);   // cpu acessa memÃƒÂ³ria
 	    }	
 	}
     // ------------------- V M  - fim ------------------------------------------------------------------------
@@ -261,7 +261,7 @@ public class Sistema {
 	public Monitor monitor;
 	public static Programas progs;
 
-    public Sistema(){   // a VM com tratamento de interrupÃ§Ãµes
+    public Sistema(){   // a VM com tratamento de interrupÃƒÂ§ÃƒÂµes
 		 vm = new VM();
 		 monitor = new Monitor();
 		 progs = new Programas(); 
@@ -272,7 +272,7 @@ public class Sistema {
 			System.out.println("---------------------------------- programa carregado ");
 			monitor.dump(vm.m, 0, programa.length);
 			monitor.executa();        
-			System.out.println("---------------------------------- apÃ³s execucao ");
+			System.out.println("---------------------------------- apÃƒÂ³s execucao ");
 			monitor.dump(vm.m, 0, programa.length);
 		}
 
@@ -291,7 +291,7 @@ public class Sistema {
 		//s.roda(progs.PB);
 	}
     // -------------------------------------------------------------------------------------------------------
-    // --------------- TUDO ABAIXO DE MAIN Ã‰ AUXILIAR PARA FUNCIONAMENTO DO SISTEMA - nao faz parte 
+    // --------------- TUDO ABAIXO DE MAIN Ãƒâ€° AUXILIAR PARA FUNCIONAMENTO DO SISTEMA - nao faz parte 
 
    //  -------------------------------------------- programas aa disposicao para copiar na memoria (vide carga)
    public class Programas {
@@ -341,42 +341,42 @@ public class Sistema {
 
 	   public Word[] fatorial = new Word[] { 	 // este fatorial so aceita valores positivos.   nao pode ser zero
 												 // linha   coment
-			new Word(Opcode.LDI, 0, -1, 6),      // 0   	r0 Ã© valor a calcular fatorial
-			new Word(Opcode.LDI, 1, -1, 1),      // 1   	r1 Ã© 1 para multiplicar (por r0)
-			new Word(Opcode.LDI, 6, -1, 1),      // 2   	r6 Ã© 1 para ser o decremento
+			new Word(Opcode.LDI, 0, -1, 6),      // 0   	r0 ÃƒÂ© valor a calcular fatorial
+			new Word(Opcode.LDI, 1, -1, 1),      // 1   	r1 ÃƒÂ© 1 para multiplicar (por r0)
+			new Word(Opcode.LDI, 6, -1, 1),      // 2   	r6 ÃƒÂ© 1 para ser o decremento
 			new Word(Opcode.LDI, 7, -1, 8),      // 3   	r7 tem posicao de stop do programa = 8
 			new Word(Opcode.JMPIE, 7, 0, 0),     // 4   	se r0=0 pula para r7(=8)
 			new Word(Opcode.MULT, 1, 0, -1),     // 5   	r1 = r1 * r0
 			new Word(Opcode.SUB, 0, 6, -1),      // 6   	decrementa r0 1 
 			new Word(Opcode.JMP, -1, -1, 4),     // 7   	vai p posicao 4
-			new Word(Opcode.STD, 1, -1, 10),     // 8   	coloca valor de r1 na posiÃ§Ã£o 10
+			new Word(Opcode.STD, 1, -1, 10),     // 8   	coloca valor de r1 na posicao 10
 			new Word(Opcode.STOP, -1, -1, -1),    // 9   	stop
-			new Word(Opcode.DATA, -1, -1, -1) };  // 10   ao final o valor do fatorial estarÃ¡ na posiÃ§Ã£o 10 da memÃ³ria
+			new Word(Opcode.DATA, -1, -1, -1) };  // 10   ao final o valor do fatorial estarÃƒÂ¡ na posiÃƒÂ§ÃƒÂ£o 10 da memÃƒÂ³ria
 	   
-	   public Word[] PA = new Word[] { 			    // Reutiliza  o código do programa "fibonacci10", que é apenas incrementado
-			    new Word(Opcode.LDD, 4, -1, 31),    // 0     Carrega no registrador R4 o valor da pos. 31 de mem. (valor base para lógica do programa)
-			    new Word(Opcode.JMPIGM, -1, 4, 5),  // 1     Se maior que 0 pula para linha 5 do código
-			     new Word(Opcode.LDI, 1, -1, -1),	// 2     Se não, coloca -1 na primeira pos. de mem. de saída(pos. 33)
-			     new Word(Opcode.STD, 1, -1, 20),	// 3
-			     new Word(Opcode.STOP, -1, -1, -1), // 4     Finaliza a execução do programa
+	   public Word[] PA = new Word[] { 			    // Reutiliza  o codigo do programa "fibonacci10", que eh apenas incrementado
+			    new Word(Opcode.LDD, 4, -1, 31),    // 0     Carrega no registrador R4 o valor da pos. 31 de mem. (valor base para logica do programa)
+			    new Word(Opcode.JMPIGM, -1, 4, 5),  // 1     Se maior que 0 pula para linha 5 do codigo
+			     new Word(Opcode.LDI, 1, -1, -1),	// 2     Se nao, coloca -1 na primeira pos. de mem. de saÃ­da(pos. 33)
+			     new Word(Opcode.STD, 1, -1, 33),	// 3
+			     new Word(Opcode.STOP, -1, -1, -1), // 4     Finaliza a execucao do programa
 			    
 				new Word(Opcode.LDI, 1, -1, 0), 	// 5	 Gera o primeiro valor da sequencia de fibonacci (0)
 				new Word(Opcode.STD, 1, -1, 33),    // 6     Salva na primeira pos. de mem. destinada a sequencia (pos. 33)
 				 new Word(Opcode.SUBI, 4, -1, 1),	// 7     Faz R4-1, pois R4 armazenava o numero total de valores desejados, utilizaremos R4 como index	
-				 new Word(Opcode.JMPIGM, -1, 4, 10),// 8     Finaliza se for igual a 0, se não, segue a execução
+				 new Word(Opcode.JMPIGM, -1, 4, 10),// 8     Finaliza se for igual a 0, se nÃ£o, segue a execucao
 				  new Word(Opcode.STOP, -1, -1, -1),// 9
 				 
 				new Word(Opcode.LDI, 2, -1, 1),		// 10	Gera o segundo valor da sequencia de fibonacci (1)
 				new Word(Opcode.STD, 2, -1, 34),    // 11	Salva na segunda pos. de mem. destinada a sequencia (pos. 34)
 				 new Word(Opcode.SUBI, 4, -1, 1),	// 12   Faz R4-1	
-				 new Word(Opcode.JMPIGM, -1, 4, 15),// 13   Finaliza se for igual a 0, se não, segue a execução
+				 new Word(Opcode.JMPIGM, -1, 4, 15),// 13   Finaliza se for igual a 0, se nao, segue a execuÃ§Ã£o
 				  new Word(Opcode.STOP, -1, -1, -1),// 14
 				 
-				new Word(Opcode.LDI, 0, -1, 35),    // 15	A partir daqui, calcularemos matematicamente os próximos valores da sequencia da pos. 35 da mem. em diante
+				new Word(Opcode.LDI, 0, -1, 35),    // 15	A partir daqui, calcularemos matematicamente os proximos valores da sequencia da pos. 35 da mem. em diante
 				new Word(Opcode.LDI, 7, -1, 1),		// 16
-				new Word(Opcode.LDI, 6, -1, 19),	// 17   19 é a pos. de mem. do inicio do loop que faz o cálculo de novos valores
-				new Word(Opcode.LDX, 7, 4, -1),		// 18	Faz R7<-[R4] (R4 tem o núm. de valores da sequencia que faltam ser calculados)
-				 new Word(Opcode.JMPIEM, -1, 7, 29),// 19   Sai do loop quando R7 zera (R7 tem o núm. de valores da sequencia que faltam ser calculados)       
+				new Word(Opcode.LDI, 6, -1, 19),	// 17   19 eh a pos. de mem. do inicio do loop que faz o calculo de novos valores
+				new Word(Opcode.LDX, 7, 4, -1),		// 18	Faz R7<-[R4] (R4 tem o num. de valores da sequencia que faltam ser calculados)
+				 new Word(Opcode.JMPIEM, -1, 7, 29),// 19   Sai do loop quando R7 zera (R7 tem o num. de valores da sequencia que faltam ser calculados)       
 				new Word(Opcode.LDI, 3, -1, 0), 	// 20
 				new Word(Opcode.ADD, 3, 1, -1),		// 21
 				new Word(Opcode.LDI, 1, -1, 0), 	// 22
@@ -385,13 +385,13 @@ public class Sistema {
 				new Word(Opcode.STX, 0, 2, -1), 	// 25
 				new Word(Opcode.ADDI, 0, -1, 1), 	// 26
 				new Word(Opcode.SUBI, 7, -1, 1),	// 27
-				new Word(Opcode.JMPIG, 6, 7, -1), 	// 28	Volta para o início do loop
-				new Word(Opcode.STOP, -1, -1, -1),  // 29	Termina a execução
-				// Área de dados
+				new Word(Opcode.JMPIG, 6, 7, -1), 	// 28	Volta para o inicio do loop
+				new Word(Opcode.STOP, -1, -1, -1),  // 29	Termina a execucao
+				// Area de dados
 				new Word(Opcode.DATA, -1, -1, -1),	// 30
-				new Word(Opcode.DATA, -1, -1, 10),	// 31   <----- Se o valor armazenado nesta pos. de mem. for menor que 0, coloca -1 no início da pos. de mem. para saída (pos 25). Se for maior, este é o núm. de valores da sequência
+				new Word(Opcode.DATA, -1, -1, 10),	// 31   <----- Se o valor armazenado nesta pos. de mem. for menor que 0, coloca -1 no inicio da pos. de mem. para saida (pos 25). Se for maior, este eh o num. de valores da sequencia
 				new Word(Opcode.DATA, -1, -1, -1),	// 32
-				new Word(Opcode.DATA, -1, -1, -1),  // 33	Sequencia salva desta posição.....
+				new Word(Opcode.DATA, -1, -1, -1),  // 33	Sequencia salva desta posicao.....
 				new Word(Opcode.DATA, -1, -1, -1),	// 34
 				new Word(Opcode.DATA, -1, -1, -1),	// 35
 				new Word(Opcode.DATA, -1, -1, -1),	// 36
@@ -403,10 +403,10 @@ public class Sistema {
 				new Word(Opcode.DATA, -1, -1, -1)   // 42    ...ate esta
 			};
 	   
-	   public Word[] PB = new Word[] { 	 // Reutiliza  o código do programa "fatorial", que é apenas incrementado
-			   new Word(Opcode.LDD, 0, -1, 14),     // 0   	Carrega no registrador 0 o valor da pos. 10 de mem. (valor base para lógica do programa)
+	   public Word[] PB = new Word[] { 	 // Reutiliza  o codigo do programa "fatorial", que eh apenas incrementado
+			   new Word(Opcode.LDD, 0, -1, 14),     // 0   	Carrega no registrador 0 o valor da pos. 10 de mem. (valor base para logica do programa)
 			   
-			   new Word(Opcode.JMPILM, -1, 0, 11),	// 1	Se R0<0, pula para a linha 11 do código
+			   new Word(Opcode.JMPILM, -1, 0, 11),	// 1	Se R0<0, pula para a linha 11 do codigo
 				  
 			   new Word(Opcode.LDI, 1, -1, 1),      // 2   
 			   new Word(Opcode.LDI, 6, -1, 1),      // 3   	
@@ -416,19 +416,19 @@ public class Sistema {
 			   new Word(Opcode.SUB, 0, 6, -1),      // 7   	 
 			   new Word(Opcode.JMP, -1, -1, 4),     // 8   
 			   new Word(Opcode.STD, 1, -1, 15),     // 9   
-			   new Word(Opcode.STOP, -1, -1, -1),   // 10   Finaliza a execução do programa
+			   new Word(Opcode.STOP, -1, -1, -1),   // 10   Finaliza a execucao do programa
 			   
 			   new Word(Opcode.LDI, 1, -1, -1),		// 11	
 			   new Word(Opcode.STD, 1, -1, 15),		// 12	Salva o valor -1 na pos. de mem. destinada ao output da resposta (pos. 15)
-			   new Word(Opcode.STOP, -1, -1, -1),	// 13	Finaliza a execução do programa
-			   // Área de dados
+			   new Word(Opcode.STOP, -1, -1, -1),	// 13	Finaliza a execucao do programa
+			   // Ã�rea de dados
 			   new Word(Opcode.DATA, -1, -1, 6), 	// 14   <---- Valor a se calcular o fatorial
 			   new Word(Opcode.DATA, -1, -1, -1)	// 15	Valor do fatorial calculado estara nesa pos. de mem.
 		};  
 	   
-	   public Word[] NewInstructionTester = new Word[] { 	// Testa as novas instruções implementadas
+	   public Word[] NewInstructionTester = new Word[] { 	// Testa as novas instrucoes implementadas
 			   new Word(Opcode.JMP, -1, -1, 14),	// 0	// Inicia o prog. na pos. 14 da mem.
-			   // Área de dados
+			   // Area de dados
 			   new Word(Opcode.DATA, -1, -1, 200),	// 1  - Ocupada
 			   new Word(Opcode.DATA, -1, -1, -1),	// 2  - Ocupada
 			   new Word(Opcode.DATA, -1, -1, -1),	// 3  - Ocupada
