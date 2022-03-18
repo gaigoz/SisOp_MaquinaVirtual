@@ -31,9 +31,9 @@ public class Sistema {
 
 	public enum Opcode {
 		DATA, ___,		    // se memoria nesta posicao tem um dado, usa DATA, se nao usada ee NULO ___
-		JMP, JMPI, JMPIG, JMPIL, JMPIE,  JMPIM, JMPIGM, JMPILM, JMPIEM, STOP,   // desvios e parada
+		JMP, JMPI, JMPIG, JMPIL, JMPIE,  JMPIM, JMPIGM, JMPIGT, JMPILM, JMPIEM, STOP,   // desvios e parada
 		ADDI, SUBI,  ADD, SUB, MULT,         // matematicos
-		LDI, LDD, STD, LDX, STX, SWAP;        // movimentacao
+		LDI, LDD, STD, LDX, STX, SWAP, MOVE;        // movimentacao
 	}
 
 	public class CPU {
@@ -83,13 +83,13 @@ public class Sistema {
 							pc++;
 							break;
 							
-						case LDD: // Rd <- [A]				// InstruÃ§Ã£o nova - pode nÃ£o estar funcionando corretamente
+						case LDD: // Rd <- [A]				// Instrucao nova - pode nao estar funcionando corretamente
 							reg[ir.r1] = m[ir.p].p; 
 							pc++;
 							break;
 							
-						case LDX: // RD <- [RS]				// InstruÃ§Ã£o nova - pode nÃ£o estar funcionando corretamente
-							reg[ir.r1] = reg[ir.r2];
+						case LDX: // RD <- [RS]				// Instrucao nova - pode nao estar funcionando corretamente
+							reg[ir.r1] = m[reg[ir.r2]].p;
 							pc++;
 							break;
 							
@@ -127,7 +127,7 @@ public class Sistema {
 							pc++;
 							break;
 							
-						case SUBI: // RD <- RD - k				// InstruÃ§Ã£o nova - pode nÃ£o estar funcionando corretamente
+						case SUBI: // RD <- RD - k				// Instrucao nova - pode nao estar funcionando corretamente
 							reg[ir.r1] = reg[ir.r1] - ir.p;
 							pc++;
 							break;	
@@ -144,8 +144,16 @@ public class Sistema {
 							}
 							break;
 							
-						case JMPIGM: // If RC > 0 then PC <- [A] else PC++		// InstruÃ§Ã£o nova - pode nÃ£o estar funcionando corretamente
+						case JMPIGM: // If RC > 0 then PC <- [A] else PC++		// Instrucao nova - pode nao estar funcionando corretamente
 							if (reg[ir.r2] > 0) {
+								pc = ir.p;
+							} else {
+								pc++;
+							}
+							break;
+							
+						case JMPIGT: // If RS>RC then PC <- [A] else PC++		// Instrucao nova - pode nao estar funcionando corretamente
+							if (reg[ir.r1] > reg[ir.r2]) {
 								pc = ir.p;
 							} else {
 								pc++;
@@ -160,7 +168,7 @@ public class Sistema {
 							}
 							break;
 							
-						case JMPIEM: // If RC = 0 then PC <- k else PC++  	// InstruÃ§Ã£o nova - pode nÃ£o estar funcionando corretamente
+						case JMPIEM: // If RC = 0 then PC <- k else PC++  	// Instrucao nova - pode nao estar funcionando corretamente
 							if (reg[ir.r2] == 0) {
 								pc = ir.p;
 							} else {
@@ -168,12 +176,17 @@ public class Sistema {
 							}
 							break;
 							
-						case JMPILM: // If RC < 0 then PC <- k else PC++	// InstruÃ§Ã£o nova - pode nÃ£o estar funcionando corretamente
+						case JMPILM: // If RC < 0 then PC <- k else PC++	// Instrucao nova - pode nao estar funcionando corretamente
 							if (reg[ir.r2] < 0) {
 								pc = ir.p;
 							} else {
 								pc++;
 							}
+							break;
+							
+						case MOVE:	// RD <- RS
+							reg[ir.r1] = reg[ir.r2];
+							pc++;
 							break;
 
 						case STOP: // por enquanto, para execucao
@@ -288,7 +301,8 @@ public class Sistema {
 		//s.roda(progs.fatorial);
 		//s.roda(progs.NewInstructionTester);
 	    //s.roda(progs.PA);
-		s.roda(progs.PB);
+		//s.roda(progs.PB);
+		s.roda(progs.PC);
 	}
     // -------------------------------------------------------------------------------------------------------
     // --------------- TUDO ABAIXO DE MAIN Ãƒâ€° AUXILIAR PARA FUNCIONAMENTO DO SISTEMA - nao faz parte 
@@ -375,7 +389,7 @@ public class Sistema {
 				new Word(Opcode.LDI, 0, -1, 35),    // 15	A partir daqui, calcularemos matematicamente os proximos valores da sequencia da pos. 35 da mem. em diante
 				new Word(Opcode.LDI, 7, -1, 1),		// 16
 				new Word(Opcode.LDI, 6, -1, 19),	// 17   19 eh a pos. de mem. do inicio do loop que faz o calculo de novos valores
-				new Word(Opcode.LDX, 7, 4, -1),		// 18	Faz R7<-[R4] (R4 tem o num. de valores da sequencia que faltam ser calculados)
+				new Word(Opcode.MOVE, 7, 4, -1),		// 18	Faz R7<-[R4] (R4 tem o num. de valores da sequencia que faltam ser calculados)
 				 new Word(Opcode.JMPIEM, -1, 7, 29),// 19   Sai do loop quando R7 zera (R7 tem o num. de valores da sequencia que faltam ser calculados)       
 				new Word(Opcode.LDI, 3, -1, 0), 	// 20
 				new Word(Opcode.ADD, 3, 1, -1),		// 21
@@ -424,7 +438,61 @@ public class Sistema {
 			   // Ã�rea de dados
 			   new Word(Opcode.DATA, -1, -1, 6), 	// 14   <---- Valor a se calcular o fatorial
 			   new Word(Opcode.DATA, -1, -1, -1)	// 15	Valor do fatorial calculado estara nesa pos. de mem.
-		};  
+		};
+	   
+	   public Word[] PC = new Word[]{				// "Bubble Sort"
+	            new Word(Opcode.LDI, 0, -1, 10),  	// 0	Carregando valores do array na memoria
+	            new Word(Opcode.STD, 0, -1, 34), 	// 1
+
+	            new Word(Opcode.LDI, 0, -1, 15),	// 2
+	            new Word(Opcode.STD, 0, -1, 35),	// 3
+
+	            new Word(Opcode.LDI, 0, -1, 7),		// 4
+	            new Word(Opcode.STD, 0, -1, 36),	// 5
+
+	            new Word(Opcode.LDI, 0, -1, -3),	// 6
+	            new Word(Opcode.STD, 0, -1, 37),	// 7
+
+	            new Word(Opcode.LDI, 0, -1, 0),		// 8
+	            new Word(Opcode.STD, 0, -1, 38),	// 9
+
+	            new Word(Opcode.LDI, 0, -1, 3),		// 10
+	            new Word(Opcode.STD, 0, -1, 39),	// 11
+
+	            new Word(Opcode.LDI, 0, -1, -5),	// 12
+	            new Word(Opcode.STD, 0, -1, 40),	// 13	Fim do array
+
+	            new Word(Opcode.LDI, 7, -1, 40),	// 14	R7 recebe o valor da pos. max de mem. do nosso vetor (pos. 40)       
+	            new Word(Opcode.LDI, 0, -1, 34),	// 15	Carrega a primeira pos. para dentro do R0 (pos. 34)
+	            new Word(Opcode.LDI, 1, -1, 35),	// 16	Carrega a segunda pos. para dentro do R1 (pos. 35)
+	            new Word(Opcode.LDI, 5, -1, 0),		// 17	R5 sera o contador de numeros que estao em ordem crescente
+	            new Word(Opcode.LDI, 6, -1, 5),		// 18	O valor max. de num. em ordem é 6(como temos 7 numeros e a comparacao eh feita de 2 em 2, esse valor max.=6), colocamos o valor 5 no R6 pois na linha 19 faremos uma comparacao JMPIGT
+	            // inicio loop
+	            new Word(Opcode.JMPIGT, 5, 6, 33),	// 19	Quando o contador de numeros em ordem chegar ao seu valor max. termina a execucao (quando o contador chegar a 6, pois 6>5 then termina execucao)
+	            new Word(Opcode.JMPIGT, 1, 7, 15),	// 20	Quando alcancar a pos. max. de mem. (pos. 46 que esta registrada no R7), volta para linha 15 para voltar para a primeira pos. e zerar o contador de numeros em ordem
+	            new Word(Opcode.LDX, 2, 0, -1),		// 21	Carrega em R2 o valor de R0
+	            new Word(Opcode.LDX, 3, 1, -1),		// 22	Carrega em R3 o valor de R1
+	            new Word(Opcode.JMPIGT, 2, 3, 28),	// 23	Compara se o primeiro valor eh maior que o segundo (da esq. para a direita na mem.)
+	             new Word(Opcode.ADDI, 0, -1, 1),	// 24		
+	             new Word(Opcode.ADDI, 1, -1, 1),	// 25	Se os valores comparados ja estiverem em ordem crescente na memoria, incrementa a pos. dos apontadores e reinicia o loop
+	             new Word(Opcode.ADDI, 5, -1, 1),	// 26	Incrementa o contador de numeros crescentes
+	             new Word(Opcode.JMP, -1, -1, 19),	// 27		 
+	            new Word(Opcode.STX, 0, 3, -1),		// 28	Se o primeiro valor for maior que o segundo, suas posicoes sao invertidas na memoria
+	            new Word(Opcode.STX, 1, 2, -1),		// 29 
+	            new Word(Opcode.ADDI, 0, -1, 1),	// 30	Incrementa os registradores que estao apontando para as pos. de mem. (R0 e R1)
+	            new Word(Opcode.ADDI, 1, -1, 1),	// 31
+	            new Word(Opcode.JMP, -1, -1, 19),	// 32	Volta para o inicio do loop
+	         
+	            new Word(Opcode.STOP, -1, -1, -1),	// 33
+	            // Area de dados
+	            new Word(Opcode.DATA, -1, -1, -1),	// 34	Vetor vai daqui....
+	            new Word(Opcode.DATA, -1, -1, -1),	// 35
+	            new Word(Opcode.DATA, -1, -1, -1),	// 36
+	            new Word(Opcode.DATA, -1, -1, -1),	// 37
+	            new Word(Opcode.DATA, -1, -1, -1),	// 38
+	            new Word(Opcode.DATA, -1, -1, -1),	// 39
+	            new Word(Opcode.DATA, -1, -1, -1),	// 40	...ate aqui    	            
+	    };
 	   
 	   public Word[] NewInstructionTester = new Word[] { 	// Testa as novas instrucoes implementadas
 			   new Word(Opcode.JMP, -1, -1, 14),	// 0	// Inicia o prog. na pos. 14 da mem.
@@ -432,9 +500,9 @@ public class Sistema {
 			   new Word(Opcode.DATA, -1, -1, 200),	// 1  - Ocupada
 			   new Word(Opcode.DATA, -1, -1, -1),	// 2  - Ocupada
 			   new Word(Opcode.DATA, -1, -1, -1),	// 3  - Ocupada
-			   new Word(Opcode.DATA, -1, -1, -1),	// 4  - Livre
-			   new Word(Opcode.DATA, -1, -1, -1),	// 5  - Livre
-			   new Word(Opcode.DATA, -1, -1, -1),	// 6  - Livre
+			   new Word(Opcode.DATA, -1, -1, -1),	// 4  - Ocupada
+			   new Word(Opcode.DATA, -1, -1, -1),	// 5  - Ocupada
+			   new Word(Opcode.DATA, -1, -1, -1),	// 6  - Ocupada
 			   new Word(Opcode.DATA, -1, -1, -1),	// 7  - Livre
 			   new Word(Opcode.DATA, -1, -1, -1),	// 8  - Livre
 			   new Word(Opcode.DATA, -1, -1, -1),	// 9  - Livre
@@ -449,7 +517,7 @@ public class Sistema {
 			    new Word(Opcode.LDI, 4, -1, 100),	// 16
 			   new Word(Opcode.STD, 4, -1, 2),		// 17
 			   
-			   new Word(Opcode.LDX, 1, 4, -1),		// 18	LDX - FUNCIONANDO (se insere em R1 o valor de R4)
+			   new Word(Opcode.MOVE, 1, 4, -1),		// 18	LDX - FUNCIONANDO (se insere em R1 o valor de R4)
 			   
 			   new Word(Opcode.SUBI, 4, -1, 10),	// 19	SUBI - FUNCIONANDO (se R4 passa a valer R4-10)
 			   
@@ -462,7 +530,17 @@ public class Sistema {
 			   new Word(Opcode.JMPILM, -1, 3, 27),	// 25	JMPILM - FUNCIONANDO (funcionando se salva o valor 100 na pos. 4 da mem.)
 			    new Word(Opcode.LDI, 3, -1, 100),	// 26
 			   new Word(Opcode.STD, 3, -1, 4),		// 27
-			    
+			   
+			   new Word(Opcode.LDI, 3, -1, 8),		// 28
+			   new Word(Opcode.LDI, 4, -1, 5),		// 29
+			   new Word(Opcode.JMPIGT, 3, 4, 32),	// 30	JMPIGT - FUNCIONANDO (funcionando se salva o valor 8 na pos. 5 da mem.)
+			    new Word(Opcode.LDI, 3, -1, 100),	// 31
+			   new Word(Opcode.STD, 3, -1, 5),		// 32
+			   
+			   new Word(Opcode.LDI, 4, -1, 1),		// 33 	 
+			   new Word(Opcode.LDX, 5, 4, -1),		// 34	LDX - FUNCIONANDO (funcionando se salva o valor 200 na pos. 6 da mem.)
+			   new Word(Opcode.STD, 5, -1, 6), 		// 35
+			   
 			   new Word(Opcode.STOP, -1, -1, -1)	//
 				   };
     }
