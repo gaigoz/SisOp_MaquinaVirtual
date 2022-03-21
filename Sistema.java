@@ -100,11 +100,11 @@ public class Sistema {
 //              --------------------------------------------------------------------------------------------------
 //              Instruções de Movimentação
 						case LDI: // Rd Ã¢â€ ï¿½ k
-							if(/*TODO*/) {
+							if(ir.p >=0 || ir.p <=1023) {
 							reg[ir.r1] = ir.p;
 							pc++;
 							}	else	{
-
+								interrupt = Interrupt.ENDERECO_INVALIDO;
 							}
 							break;
 							
@@ -123,7 +123,7 @@ public class Sistema {
 								m[ir.p].p = reg[ir.r1];
 								pc++;
 							} else {
-								/*TODO*/
+								interrupt = Interrupt.ENDERECO_INVALIDO;
 							}
 							break;		
 
@@ -132,7 +132,7 @@ public class Sistema {
 							reg[ir.r1] = m[reg[ir.r2]].p;
 							pc++;
 							} else {
-								/*TODO*/
+								interrupt = Interrupt.ENDERECO_INVALIDO;
 							}
 							break;
 							
@@ -142,7 +142,7 @@ public class Sistema {
 								m[reg[ir.r1]].p = reg[ir.r2];          
 								pc++;
 							} else {
-								/*TODO*/
+								interrupt = Interrupt.ENDERECO_INVALIDO;
 							}
 							break;		
 //              --------------------------------------------------------------------------------------------------
@@ -160,7 +160,7 @@ public class Sistema {
 							}
 							break;
 
-						case SUBI: // RD <- RD - k				// Instrucao nova - pode nao estar funcionando corretamente
+						case SUBI: // RD <- RD - k				
 							if(/*TODO*/){
 								reg[ir.r1] = reg[ir.r1] - ir.p;
 								pc++;
@@ -290,7 +290,6 @@ public class Sistema {
 
 								}
 								break;
-							
 							
 						case MOVE:	// RD <- RS
 							reg[ir.r1] = reg[ir.r2];
