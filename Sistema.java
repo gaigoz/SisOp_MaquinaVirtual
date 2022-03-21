@@ -7,6 +7,8 @@
 
 import java.util.*;
 
+import Sistema.Interrupt.Flags;
+
 public class Sistema {
 
 	// -------------------------------------------------------------------------------------------------------
@@ -50,7 +52,8 @@ public class Sistema {
 		private int[] reg; // registradores da CPU
 		private Word[] m; // CPU acessa MEMORIA, guarda referencia 'm' a ela. memoria nao muda. ee sempre
 							// a mesma.
-		private Interrupt interrupt; // interrupções
+
+		private Interrupt.Flags interrupt; // interrupções
 
 		public CPU(Word[] _m) { // ref a MEMORIA e interrupt handler passada na criacao da CPU
 			m = _m; // usa o atributo 'm' para acessar a memoria.
@@ -104,12 +107,13 @@ public class Sistema {
 							reg[ir.r1] = ir.p;
 							pc++;
 							}	else	{
-								interrupt = Interrupt.ENDERECO_INVALIDO;
+								interrupt = Interrupt.Flags.ENDERECO_INVALIDO;
+								interrupt = interrupt.
 							}
 							break;
 							
-						case LDD: // Rd <- [A]				// Instrucao nova - pode nao estar funcionando corretamente
-							if(/*TODO*/){
+						case LDD: // Rd <- [A]				
+							if(ir.p >=0 || ir.p <=1023){
 							reg[ir.r1] = m[ir.p].p; 
 							pc++;
 							} else{
@@ -127,7 +131,7 @@ public class Sistema {
 							}
 							break;		
 
-						case LDX: // RD <- [RS]				// Instrucao nova - pode nao estar funcionando corretamente
+						case LDX: // RD <- [RS]				
 							if(/*TODO*/){
 							reg[ir.r1] = m[reg[ir.r2]].p;
 							pc++;
@@ -151,12 +155,15 @@ public class Sistema {
 //              --------------------------------------------------------------------------------------------------
 //              Instruções Aritméticas
 						
+					int teste = 2147483647;
+					int teste2 = -2147483648;
+						
 						case ADDI: // Rd Ã¢â€ ï¿½ Rd + k
 							if(/*TODO*/){
 								reg[ir.r1] = reg[ir.r1] + ir.p;
 								pc++;
 							} else {
-								/*TODO*/
+								interrupt = Interrupt.OVERFLOW;
 							}
 							break;
 
@@ -165,7 +172,7 @@ public class Sistema {
 								reg[ir.r1] = reg[ir.r1] - ir.p;
 								pc++;
 							} else {
-
+								interrupt = Interrupt.OVERFLOW;
 							}
 							break;
 
@@ -174,7 +181,7 @@ public class Sistema {
 								reg[ir.r1] = reg[ir.r1] + reg[ir.r2];
 								pc++;
 							} else {
-								/*TODO*/
+								interrupt = Interrupt.OVERFLOW;
 							}
 							break;
 
@@ -183,7 +190,7 @@ public class Sistema {
 								reg[ir.r1] = reg[ir.r1] - reg[ir.r2];
 								pc++;
 							} else {
-								/*TODO*/
+								/interrupt = Interrupt.OVERFLOW;
 							}
 							break;
 
@@ -192,7 +199,7 @@ public class Sistema {
 							reg[ir.r1] = reg[ir.r1] * reg[ir.r2]; // gera um overflow // -->  LIGA INT  (1)
 							pc++;
 							} else {
-								/*TODO*/
+								interrupt = Interrupt.OVERFLOW;
 							}
 							break;		
 //              --------------------------------------------------------------------------------------------------
@@ -338,11 +345,15 @@ public class Sistema {
 			cpu = new CPU(m); // cpu acessa memÃƒÂ³ria
 		}
 	}
-
-	public enum Interrupt {
-
-		NULL, ENDERECO_INVALIDO, INSTRUCAO_INVALIDA, OVERFLOW, STOP
+	public static class Interrupt{
+		
+		public enum Flags {
+			NULL, ENDERECO_INVALIDO, INSTRUCAO_INVALIDA, OVERFLOW, STOP
+		}
+		 public int max_number = 10000;
+		 public int min_number =-10000;
 	}
+
 	// ------------------- V M - fim
 	// ------------------------------------------------------------------------
 	// -------------------------------------------------------------------------------------------------------
