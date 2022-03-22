@@ -131,7 +131,7 @@ public class Sistema {
 							}
 							break;		
 
-						case LDX: // RD <- [RS]				
+						case LDX: // RD <- [RS]							// NOVA	
 							if(/*TODO*/){
 							reg[ir.r1] = m[reg[ir.r2]].p;
 							pc++;
@@ -167,7 +167,7 @@ public class Sistema {
 							}
 							break;
 
-						case SUBI: // RD <- RD - k				
+						case SUBI: // RD <- RD - k				// NOVA			
 							if(/*TODO*/){
 								reg[ir.r1] = reg[ir.r1] - ir.p;
 								pc++;
@@ -218,7 +218,7 @@ public class Sistema {
 							pc = reg[ir.r1];
 							break;
 
-						case JMPIG: // If RC > 0 then PC<-RS else PC++ 										//NOVA
+						case JMPIG: // If RC > 0 then PC<-RS else PC++ 										
 							if (reg[ir.r2] > 0) {
 								pc = reg[ir.r1];
 							} else {
@@ -226,7 +226,7 @@ public class Sistema {
 							}
 							break;
 							
-						case JMPIL: // if Rc < 0 then PC <- Rs Else PC <-  PC +1 							//NOVA
+						case JMPIL: // if Rc < 0 then PC <- Rs Else PC <-  PC +1 							
 							if(){
 								if(reg[ir.r2] < 0)
 									pc = reg[ir.r1];
@@ -247,7 +247,7 @@ public class Sistema {
 							}
 							break;
 
-						case JMPIM: // PC <- [A]														//NOVA
+						case JMPIM: // PC <- [A]													
 							if(/*TODO*/){
 								pc =  m[ir.p].p;
 							} else{
@@ -287,7 +287,7 @@ public class Sistema {
 							}
 							break;	
 							
-						case JMPIGT: // If RS>RC then PC <- [A] else PC++		
+						case JMPIGT: // If RS>RC then PC <- k else PC++		
 							if(/*TODO*/){	
 								if (reg[ir.r1] > reg[ir.r2]) 
 									pc = ir.p;
@@ -678,14 +678,14 @@ public class Sistema {
 				new Word(Opcode.DATA, -1, -1, -1), // 12 - Livre
 				new Word(Opcode.DATA, -1, -1, -1), // 13 - Livre
 				// Programa
-				new Word(Opcode.LDD, 4, -1, 1), // 14 LDD - FUNCIONANDO (se insere em R4 o valor da pos. 1 da mem.)
+				new Word(Opcode.LDD, 4, -1, 1),     // 14 LDD - FUNCIONANDO (se insere em R4 o valor da pos. 1 da mem.)
 
 				new Word(Opcode.JMPIGM, -1, 4, 17), // 15 JMPIGM - FUNCIONANDO (se salva corretamente o valor de R4 na
 													// pos. 2 da mem.)
-				new Word(Opcode.LDI, 4, -1, 100), // 16
-				new Word(Opcode.STD, 4, -1, 2), // 17
+				new Word(Opcode.LDI, 4, -1, 100),   // 16
+				new Word(Opcode.STD, 4, -1, 2),    // 17
 
-				new Word(Opcode.MOVE, 1, 4, -1), // 18 LDX - FUNCIONANDO (se insere em R1 o valor de R4)
+				new Word(Opcode.MOVE, 1, 4, -1), // 18 MOVE - FUNCIONANDO (se insere em R1 o valor de R4)
 
 				new Word(Opcode.SUBI, 4, -1, 10), // 19 SUBI - FUNCIONANDO (se R4 passa a valer R4-10)
 
