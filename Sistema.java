@@ -472,9 +472,11 @@ public class Sistema {
 		// s.roda(progs.progMinimo);
 		// s.roda(progs.fatorial);
 		// s.roda(progs.NewInstructionTester);
-		s.roda(progs.PA);
+		//s.roda(progs.PA);
 		// s.roda(progs.PB);
 		// s.roda(progs.PC);
+		s.roda(progs.InterruptionTester);
+		
 	}
 	// -------------------------------------------------------------------------------------------------------
 	// --------------- TUDO ABAIXO DE MAIN Ãƒâ€° AUXILIAR PARA FUNCIONAMENTO DO
@@ -744,5 +746,17 @@ public class Sistema {
 
 				new Word(Opcode.STOP, -1, -1, -1) //
 		};
+		
+		public Word[] InterruptionTester = new Word[] {
+				//new Word(Opcode.XXX, 3, -1, 5),
+				new Word(Opcode.LDD, 1, -1, 9),
+				new Word(Opcode.LDD, 1, -1, 1025),
+				new Word(Opcode.LDD, 1, -1, 9),
+				new Word(Opcode.LDD, 1, -1, 9),
+				new Word(Opcode.LDD, 1, -1, 9),
+				new Word(Opcode.LDD, 1, -1, 9),
+				new Word(Opcode.STOP, -1, -1, -1)
+		};
+		
 	}
 }
