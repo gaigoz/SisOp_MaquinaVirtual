@@ -6,6 +6,7 @@
 //
 
 import java.util.*;
+import util.Console;
 
 public class Sistema {
 
@@ -320,6 +321,8 @@ public class Sistema {
 							break;
 
 						case STOP: // por enquanto, para execucao
+							System.out.println("FINAL DO PROGRAMA");
+							interrupt = Interrupt.STOP;
 							break;
 						    // opcode desconhecido
 							// liga interrup (2)
@@ -328,15 +331,27 @@ public class Sistema {
 							interrupt = Interrupt.INSTRUCAO_INVALIDA;
 							break;
 					}
+					
 				
 				// VERIFICA INTERRUPCAO !!! - TERCEIRA FASE DO CICLO DE INSTRUCOES
-				if (ir.opc==Opcode.STOP) {   
-					break; // break sai do loop da cpu
-
-			    // if int ligada - vai para tratamento da int 
-				//     desviar para rotina java que trata int
+					switch(interrupt) {
+					case STOP:
+						System.out.println("System Interruption: FINAL DO PROGRAMA");
+						break;
+					case ENDERECO_INVALIDO:
+						System.out.println("System Interruption: ENDERECO INVALIDO");
+						break;
+					case INSTRUCAO_INVALIDA:
+						System.out.println("System Interruption: INSTRUCAO INVALIDA");
+						break;
+					case OVERFLOW:
+						System.out.println("System Interruption: OVERFLOW");
+						break;
+					default:
+						//Console.warn("NO INTERRUPTION");
+						break;
 				}
-			}
+			}			
 		}
 	}
 	// ------------------ C P U - fim
