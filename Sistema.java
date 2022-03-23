@@ -90,6 +90,8 @@ public class Sistema {
 
 		public void run() { 		// execucao da CPU supoe que o contexto da CPU, vide acima, esta devidamente setado
 			
+			interrupt = Interrupt.NULL;
+			
 			while (interrupt == Interrupt.NULL) { 			// ciclo de instrucoes. acaba cfe instrucao, veja cada caso.	
 					
 				ir = m[pc]; // FETCH - busca posicao da memoria apontada por pc, guarda em ir
@@ -320,12 +322,9 @@ public class Sistema {
 							pc++;
 							break;
 
-						case STOP: // por enquanto, para execucao
-							System.out.println("FINAL DO PROGRAMA");
+						case STOP: 
 							interrupt = Interrupt.STOP;
 							break;
-						    // opcode desconhecido
-							// liga interrup (2)
 							
 						default:	// caso a intrucao nao esteja em nenhum dos cases acima
 							interrupt = Interrupt.INSTRUCAO_INVALIDA;
@@ -348,7 +347,7 @@ public class Sistema {
 						System.out.println("System Interruption: OVERFLOW");
 						break;
 					default:
-						//Console.warn("NO INTERRUPTION");
+						System.out.println("NO INTERRUPTION");
 						break;
 				}
 			}			
@@ -445,7 +444,7 @@ public class Sistema {
 	public Monitor monitor;
 	public static Programas progs;
 
-	public Sistema() { // a VM com tratamento de interrupÃƒÂ§ÃƒÂµes
+	public Sistema() { // a VM com tratamento de interrupcoes
 		vm = new VM();
 		monitor = new Monitor();
 		progs = new Programas();
@@ -456,7 +455,7 @@ public class Sistema {
 		System.out.println("---------------------------------- programa carregado ");
 		monitor.dump(vm.m, 0, programa.length);
 		monitor.executa();
-		System.out.println("---------------------------------- apÃƒÂ³s execucao ");
+		System.out.println("---------------------------------- apos execucao ");
 		monitor.dump(vm.m, 0, programa.length);
 	}
 
