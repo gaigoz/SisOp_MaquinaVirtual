@@ -6,7 +6,6 @@
 //
 
 import java.util.*;
-import util.Console;
 
 public class Sistema {
 
@@ -39,7 +38,7 @@ public class Sistema {
 
 	public enum Opcode {
 		DATA, ___, // se memoria nesta posicao tem um dado, usa DATA, se nao usada ee NULO ___
-		JMP, JMPI, JMPIG, JMPIL, JMPIE, JMPIM, JMPIGM, JMPIGT, JMPILM, JMPIEM, STOP, // desvios e parada
+		JMP, JMPIGK, JMPILK, JMPIEK, JMPI, JMPIG, JMPIL, JMPIE, JMPIM, JMPIGM, JMPIGT, JMPILM, JMPIEM, STOP, // desvios e parada
 		ADDI, SUBI, ADD, SUB, MULT, // matematicos
 		LDI, LDD, STD, LDX, STX, SWAP, MOVE; // movimentacao
 	}
@@ -102,14 +101,10 @@ public class Sistema {
 					switch (ir.opc) { // para cada opcode, sua execucao
 //              --------------------------------------------------------------------------------------------------
 //              --------------------------------------------------------------------------------------------------
-//              Instrucoes de Movimentacao
+//              Instrucoes de Memoria
 						case LDI: // Rd <- k
-							if(ir.p >=0 && ir.p <=1023) {
 							reg[ir.r1] = ir.p;
 							pc++;
-							}	else	{
-								interrupt = Interrupt.ENDERECO_INVALIDO;
-							}
 							break;
 							
 						case LDD: // Rd <- [A]				
@@ -210,6 +205,45 @@ public class Sistema {
 								interrupt = Interrupt.ENDERECO_INVALIDO;
 							}
 						    break;
+						    
+						case JMPIGK:	// If RC > 0 then PC <- k else PC++
+							if(ir.p >=0 && ir.p <=1023){	
+								if (reg[ir.r2] > 0) {
+									pc = ir.p;
+								} else {
+									pc++;
+								}
+								break;
+							} else {
+								interrupt = Interrupt.ENDERECO_INVALIDO;
+							}
+							break;
+							
+						case JMPILK:	// If RC < 0 then PC <- k else PC++
+							if(ir.p >=0 && ir.p <=1023){	
+								if (reg[ir.r2] < 0) {
+									pc = ir.p;
+								} else {
+									pc++;
+								}
+								break;
+							} else {
+								interrupt = Interrupt.ENDERECO_INVALIDO;
+							}
+							break;
+							
+						case JMPIEK:	// If RC = 0 then PC <- k else PC++
+							if(ir.p >=0 && ir.p <=1023){	
+								if (reg[ir.r2] == 0) {
+									pc = ir.p;
+								} else { 
+									pc++;
+								}
+								break;
+							} else {
+								interrupt = Interrupt.ENDERECO_INVALIDO;
+							}
+							break;	
 						
 						case JMPI: // PC <- Rs
 							if(reg[ir.r1] >=0 && reg[ir.r1] <=1023){
@@ -268,7 +302,7 @@ public class Sistema {
 						case JMPIGM: // If RC > 0 then PC <- [A] else PC++		
 							if(ir.p >=0 && ir.p <=1023){	
 								if (reg[ir.r2] > 0) {
-									pc = ir.p;
+									pc = m[ir.p].p;
 								} else {
 									pc++;
 								}
@@ -281,7 +315,7 @@ public class Sistema {
 						case JMPILM: // If RC < 0 then PC <- k else PC++	
 							if(ir.p >=0 && ir.p <=1023){	
 								if (reg[ir.r2] < 0) {
-									pc = ir.p;
+									pc =  m[ir.p].p;
 								} else {
 									pc++;
 								}
@@ -294,7 +328,7 @@ public class Sistema {
 						case JMPIEM: // If RC = 0 then PC <- k else PC++  	
 							if(ir.p >=0 && ir.p <=1023){	
 								if (reg[ir.r2] == 0) {
-									pc = ir.p;
+									pc = m[ir.p].p;
 								} else { 
 									pc++;
 								}
@@ -335,19 +369,35 @@ public class Sistema {
 				// VERIFICA INTERRUPCAO !!! - TERCEIRA FASE DO CICLO DE INSTRUCOES
 					switch(interrupt) {
 					case STOP:
-						System.out.println("System Interruption: FINAL DO PROGRAMA");
+						System.out.print("\n");
+						System.out.print("\n");
+						System.out.println(">>> System Interruption: FINAL DO PROGRAMA <<<");
+						System.out.print("\n");
+						System.out.print("\n");
 						break;
 					case ENDERECO_INVALIDO:
-						System.out.println("System Interruption: ENDERECO INVALIDO");
+						System.out.print("\n");
+						System.out.print("\n");
+						System.out.println(">>> System Interruption: ENDERECO INVALIDO <<<");
+						System.out.print("\n");
+						System.out.print("\n");
 						break;
 					case INSTRUCAO_INVALIDA:
-						System.out.println("System Interruption: INSTRUCAO INVALIDA");
+						System.out.print("\n");
+						System.out.print("\n");
+						System.out.println(">>> System Interruption: INSTRUCAO INVALIDA <<<");
+						System.out.print("\n");
+						System.out.print("\n");
 						break;
 					case OVERFLOW:
-						System.out.println("System Interruption: OVERFLOW");
+						System.out.print("\n");
+						System.out.print("\n");
+						System.out.println(">>> System Interruption: OVERFLOW <<<");
+						System.out.print("\n");
+						System.out.print("\n");
 						break;
 					default:
-						System.out.println("NO INTERRUPTION");
+						//System.out.println("NO INTERRUPTION");
 						break;
 				}
 			}			
@@ -471,10 +521,10 @@ public class Sistema {
 		// em memoria secundaria
 		// s.roda(progs.progMinimo);
 		// s.roda(progs.fatorial);
-		// s.roda(progs.NewInstructionTester);
+		//s.roda(progs.NewInstructionTester);
 		//s.roda(progs.PA);
-		// s.roda(progs.PB);
-		// s.roda(progs.PC);
+		//s.roda(progs.PB);
+		//s.roda(progs.PC);
 		s.roda(progs.InterruptionTester);
 		
 	}
@@ -542,14 +592,14 @@ public class Sistema {
 				new Word(Opcode.JMP, -1, -1, 4), // 7 vai p posicao 4
 				new Word(Opcode.STD, 1, -1, 10), // 8 coloca valor de r1 na posicao 10
 				new Word(Opcode.STOP, -1, -1, -1), // 9 stop
-				new Word(Opcode.DATA, -1, -1, -1) }; // 10 ao final o valor do fatorial estarÃƒÂ¡ na posiÃƒÂ§ÃƒÂ£o 10 da
-														// memÃƒÂ³ria
+				new Word(Opcode.DATA, -1, -1, -1) }; // 10 ao final o valor do fatorial estara na posicao 10 da
+														// memoria
 
 		public Word[] PA = new Word[] { // Reutiliza o codigo do programa "fibonacci10", que eh apenas incrementado
 				new Word(Opcode.LDD, 4, -1, 31), // 0 Carrega no registrador R4 o valor da pos. 31 de mem. (valor base
 													// para logica do programa)
-				new Word(Opcode.JMPIGM, -1, 4, 5), // 1 Se maior que 0 pula para linha 5 do codigo
-				new Word(Opcode.LDI, 1, -1, -1), // 2 Se nao, coloca -1 na primeira pos. de mem. de saÃ­da(pos. 33)
+				new Word(Opcode.JMPIGK, -1, 4, 5), // 1 Se maior que 0 pula para linha 5 do codigo
+				new Word(Opcode.LDI, 1, -1, -1), // 2 Se nao, coloca -1 na primeira pos. de mem. de saida(pos. 33)
 				new Word(Opcode.STD, 1, -1, 33), // 3
 				new Word(Opcode.STOP, -1, -1, -1), // 4 Finaliza a execucao do programa
 
@@ -557,13 +607,13 @@ public class Sistema {
 				new Word(Opcode.STD, 1, -1, 33), // 6 Salva na primeira pos. de mem. destinada a sequencia (pos. 33)
 				new Word(Opcode.SUBI, 4, -1, 1), // 7 Faz R4-1, pois R4 armazenava o numero total de valores desejados,
 													// utilizaremos R4 como index
-				new Word(Opcode.JMPIGM, -1, 4, 10), // 8 Finaliza se for igual a 0, se nÃ£o, segue a execucao
+				new Word(Opcode.JMPIGK, -1, 4, 10), // 8 Finaliza se for igual a 0, se nao, segue a execucao
 				new Word(Opcode.STOP, -1, -1, -1), // 9
 
 				new Word(Opcode.LDI, 2, -1, 1), // 10 Gera o segundo valor da sequencia de fibonacci (1)
 				new Word(Opcode.STD, 2, -1, 34), // 11 Salva na segunda pos. de mem. destinada a sequencia (pos. 34)
 				new Word(Opcode.SUBI, 4, -1, 1), // 12 Faz R4-1
-				new Word(Opcode.JMPIGM, -1, 4, 15), // 13 Finaliza se for igual a 0, se nao, segue a execuÃ§Ã£o
+				new Word(Opcode.JMPIGK, -1, 4, 15), // 13 Finaliza se for igual a 0, se nao, segue a execucao
 				new Word(Opcode.STOP, -1, -1, -1), // 14
 
 				new Word(Opcode.LDI, 0, -1, 35), // 15 A partir daqui, calcularemos matematicamente os proximos valores
@@ -573,7 +623,7 @@ public class Sistema {
 													// valores
 				new Word(Opcode.MOVE, 7, 4, -1), // 18 Faz R7<-[R4] (R4 tem o num. de valores da sequencia que faltam
 													// ser calculados)
-				new Word(Opcode.JMPIEM, -1, 7, 29), // 19 Sai do loop quando R7 zera (R7 tem o num. de valores da
+				new Word(Opcode.JMPIEK, -1, 7, 29), // 19 Sai do loop quando R7 zera (R7 tem o num. de valores da
 													// sequencia que faltam ser calculados)
 				new Word(Opcode.LDI, 3, -1, 0), // 20
 				new Word(Opcode.ADD, 3, 1, -1), // 21
@@ -607,7 +657,7 @@ public class Sistema {
 				new Word(Opcode.LDD, 0, -1, 14), // 0 Carrega no registrador 0 o valor da pos. 10 de mem. (valor base
 													// para logica do programa)
 
-				new Word(Opcode.JMPILM, -1, 0, 11), // 1 Se R0<0, pula para a linha 11 do codigo
+				new Word(Opcode.JMPILK, -1, 0, 11), // 1 Se R0<0, pula para a linha 11 do codigo
 
 				new Word(Opcode.LDI, 1, -1, 1), // 2 R1 recebe 1 para multiplicar (por R0)
 				new Word(Opcode.LDI, 6, -1, 1), // 3 R6 recebe 1 para ser o decremento
@@ -624,7 +674,7 @@ public class Sistema {
 													// (pos. 15)
 				new Word(Opcode.STOP, -1, -1, -1), // 13 Finaliza a execucao do programa
 				// Ã�rea de dados
-				new Word(Opcode.DATA, -1, -1, 6), // 14 <---- Valor a se calcular o fatorial
+				new Word(Opcode.DATA, -1, -1, 7), // 14 <---- Valor a se calcular o fatorial
 				new Word(Opcode.DATA, -1, -1, -1) // 15 Valor do fatorial calculado estara nesa pos. de mem.
 		};
 
@@ -701,7 +751,7 @@ public class Sistema {
 				new Word(Opcode.DATA, -1, -1, -1), // 4 - Ocupada
 				new Word(Opcode.DATA, -1, -1, -1), // 5 - Ocupada
 				new Word(Opcode.DATA, -1, -1, -1), // 6 - Ocupada
-				new Word(Opcode.DATA, -1, -1, -1), // 7 - Livre
+				new Word(Opcode.DATA, -1, -1, 38), // 7 - Ocupada
 				new Word(Opcode.DATA, -1, -1, -1), // 8 - Livre
 				new Word(Opcode.DATA, -1, -1, -1), // 9 - Livre
 				new Word(Opcode.DATA, -1, -1, -1), // 10 - Livre
@@ -711,7 +761,7 @@ public class Sistema {
 				// Programa
 				new Word(Opcode.LDD, 4, -1, 1),     // 14 LDD - FUNCIONANDO (se insere em R4 o valor da pos. 1 da mem.)
 
-				new Word(Opcode.JMPIGM, -1, 4, 17), // 15 JMPIGM - FUNCIONANDO (se salva corretamente o valor de R4 na
+				new Word(Opcode.JMPIGK, -1, 4, 17), // 15 JMPIGK - FUNCIONANDO (se salva corretamente o valor de R4 na
 													// pos. 2 da mem.)
 				new Word(Opcode.LDI, 4, -1, 100),   // 16
 				new Word(Opcode.STD, 4, -1, 2),    // 17
@@ -721,13 +771,13 @@ public class Sistema {
 				new Word(Opcode.SUBI, 4, -1, 10), // 19 SUBI - FUNCIONANDO (se R4 passa a valer R4-10)
 
 				new Word(Opcode.LDI, 3, -1, 0), // 20
-				new Word(Opcode.JMPIEM, -1, 3, 23), // 21 JMPIEM - FUNCIONANDO (funcionando se salva o valor 0 na pos. 3
+				new Word(Opcode.JMPIEK, -1, 3, 23), // 21 JMPIEK - FUNCIONANDO (funcionando se salva o valor 0 na pos. 3
 													// da mem.)
 				new Word(Opcode.LDI, 3, -1, 100), // 22
 				new Word(Opcode.STD, 3, -1, 2), // 23
 
 				new Word(Opcode.LDI, 3, -1, 0), // 24
-				new Word(Opcode.JMPILM, -1, 3, 27), // 25 JMPILM - FUNCIONANDO (funcionando se salva o valor 100 na pos.
+				new Word(Opcode.JMPILK, -1, 3, 27), // 25 JMPILK - FUNCIONANDO (funcionando se salva o valor 100 na pos.
 													// 4 da mem.)
 				new Word(Opcode.LDI, 3, -1, 100), // 26
 				new Word(Opcode.STD, 3, -1, 4), // 27
@@ -743,18 +793,107 @@ public class Sistema {
 				new Word(Opcode.LDX, 5, 4, -1), // 34 LDX - FUNCIONANDO (funcionando se salva o valor 200 na pos. 6 da
 												// mem.)
 				new Word(Opcode.STD, 5, -1, 6), // 35
+				
+				new Word(Opcode.JMPIGM, -1, 4, 7),	// 36	JMPIGM - FUNCIONANDO (funcionando se salva 45 na pos. 8 da mem.)
+				new Word(Opcode.LDI, 4, -1, 50), 	// 37
+				new Word(Opcode.LDI, 4, -1, 45), // 38
+				new Word(Opcode.STD, 4, -1, 8), // 39
 
 				new Word(Opcode.STOP, -1, -1, -1) //
 		};
 		
 		public Word[] InterruptionTester = new Word[] {
-				//new Word(Opcode.XXX, 3, -1, 5),
-				new Word(Opcode.LDD, 1, -1, 9),
-				new Word(Opcode.LDD, 1, -1, 1025),
-				new Word(Opcode.LDD, 1, -1, 9),
-				new Word(Opcode.LDD, 1, -1, 9),
-				new Word(Opcode.LDD, 1, -1, 9),
-				new Word(Opcode.LDD, 1, -1, 9),
+				new Word(Opcode.JMP, -1, -1, 14), 	// 0 	// Inicia o prog. na pos. 14 da mem.
+				// Area de dados
+				new Word(Opcode.DATA, -1, -1, 1025),// 1
+				new Word(Opcode.DATA, -1, -1, -1025),	// 2
+				new Word(Opcode.DATA, -1, -1, -1),	// 3
+				new Word(Opcode.DATA, -1, -1, -1),	// 4
+				new Word(Opcode.DATA, -1, -1, -1),	// 5
+				new Word(Opcode.DATA, -1, -1, -1),	// 6
+				new Word(Opcode.DATA, -1, -1, -1),	// 7
+				new Word(Opcode.DATA, -1, -1, -1),	// 8
+				new Word(Opcode.DATA, -1, -1, -1),	// 9
+				new Word(Opcode.DATA, -1, -1, -1),	// 10
+				new Word(Opcode.DATA, -1, -1, -1),	// 11
+				new Word(Opcode.DATA, -1, -1, -1),	// 12
+				new Word(Opcode.DATA, -1, -1, -1),	// 13
+				
+				new Word(Opcode.LDI, 0, -1, 1025),	// 14
+				new Word(Opcode.LDI, 1, -1, 10000),	// 15
+				new Word(Opcode.LDI, 2, -1, -1025),	// 16
+				new Word(Opcode.LDI, 3, -1, 0),		// 17
+				new Word(Opcode.LDI, 4, -1, 0),		// 18
+				new Word(Opcode.LDI, 5, -1, 0),		// 19
+				new Word(Opcode.LDI, 6, -1, 0),		// 20
+				new Word(Opcode.LDI, 7, -1, 0),		// 21
+				
+				//new Word(Opcode.XXX, 3, -1, 5),		// IMPOSSIVEL DE TESTAR
+				
+				// Instrucoes de Memoria
+				//new Word(Opcode.LDD, 1, -1, 1025),		// LDD - FUNCIONANDO
+				//--------------------------------
+				//new Word(Opcode.LDX, 1, 0, -1),			// LDX - FUNCIONANDO
+				//--------------------------------
+				//new Word(Opcode.STD, 1, 1025, -1),		// STD - FUNCIONANDO
+				//--------------------------------
+				//new Word(Opcode.STX, 0, 1, -1),			// STX - FUNCIONANDO
+				
+				// Instrucoes Aritmeticas
+				//new Word(Opcode.ADDI, 1, -1, 1),			// ADDI - FUNCIONANDO PARA OVERFLOW(+) E OVERFLOW(-)
+				//new Word(Opcode.LDI, 1, -1, -10000),	
+				//new Word(Opcode.ADDI, 1, -1, -1),
+				//--------------------------------
+				//new Word(Opcode.SUBI, 1, -1, -1),			// SUBI - FUNCIONANDO PARA OVERFLOW(+) E OVERFLOW(-)
+				//new Word(Opcode.LDI, 1, -1, -10000),
+				//new Word(Opcode.SUBI, 1, -1, 1),
+				//--------------------------------
+				//new Word(Opcode.ADD, 0, 1, -1),			// ADD - FUNCIONANDO PARA OVERFLOW(+) E OVERFLOW(-)
+				//new Word(Opcode.LDI, 1, -1, -10000),
+				//new Word(Opcode.ADD, 2, 1, -1),
+				//--------------------------------
+				//new Word(Opcode.LDI, 1, -1, 15000),
+				//new Word(Opcode.SUB, 1, 0, -1),			// SUB - FUNCIONANDO PARA OVERFLOW(+) E OVERFLOW(-)
+				//new Word(Opcode.LDI, 1, -1, -10000),
+				//new Word(Opcode.SUB, 1, 0, -1),
+				//--------------------------------
+				//new Word(Opcode.MULT, 0, 1, -1),			// MULT - FUNCIONANDO PARA OVERFLOW(+) E OVERFLOW(-)
+				//new Word(Opcode.MULT, 1, 2, -1),
+				
+				// Instrucoes Jump
+				//new Word(Opcode.JMP, -1, -1, 1024),		// JMP - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
+				//new Word(Opcode.JMP, -1, -1, -2),
+				//--------------------------------
+				//new Word(Opcode.JMPIGK, -1, 0, 1024),		// JMPIGK - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
+				//new Word(Opcode.JMPIGK, -1, 0, -1),
+				//--------------------------------
+				//new Word(Opcode.JMPI, 0, -1, -1),			// JMPI - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
+				//new Word(Opcode.JMPI, 2, -1, -1),
+				//--------------------------------
+				//new Word(Opcode.JMPIG, 0, 0, -1),			// JMPIG - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
+				//new Word(Opcode.JMPIG, 2, 0, -1),
+				//--------------------------------
+				//new Word(Opcode.JMPIL, 0, 2, -1),			// JMPIL - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
+				//new Word(Opcode.JMPIL, 2, 2, -1),
+				//--------------------------------
+				//new Word(Opcode.JMPIE, 0, 7, -1),			// JMPIE - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
+				//new Word(Opcode.JMPIE, 2, 7, -1),
+				//--------------------------------
+				//new Word(Opcode.JMPIM, -1, -1, 1),		// JMPIM - TESTAR 
+				//--------------------------------
+				//new Word(Opcode.JMPIGM, -1, 0, 1),		// JMPIGM - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
+				//new Word(Opcode.JMPIGM, -1, 0, 2),
+				//--------------------------------
+				//new Word(Opcode.JMPILM, -1, 2, 1),		// JMPILM - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
+				//new Word(Opcode.JMPILM, -1, 2, 2),
+				//--------------------------------
+				//new Word(Opcode.JMPIEM, -1, 7, 1),		// JMPIEM - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
+				//new Word(Opcode.JMPIEM, -1, 7, 2),
+				//--------------------------------
+				//new Word(Opcode.JMPIGT, 1, 0, 1025),		// JMPIGT - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
+				//new Word(Opcode.JMPIGT, 1, 0, -1),
+				//--------------------------------
+				
 				new Word(Opcode.STOP, -1, -1, -1)
 		};
 		
