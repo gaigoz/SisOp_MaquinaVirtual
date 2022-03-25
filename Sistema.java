@@ -6,6 +6,7 @@
 //
 
 import java.util.*;
+import java.util.Scanner;
 
 public class Sistema {
 
@@ -40,7 +41,8 @@ public class Sistema {
 		DATA, ___, // se memoria nesta posicao tem um dado, usa DATA, se nao usada ee NULO ___
 		JMP, JMPIGK, JMPILK, JMPIEK, JMPI, JMPIG, JMPIL, JMPIE, JMPIM, JMPIGM, JMPIGT, JMPILM, JMPIEM, STOP, // desvios e parada
 		ADDI, SUBI, ADD, SUB, MULT, // matematicos
-		LDI, LDD, STD, LDX, STX, SWAP, MOVE; // movimentacao
+		LDI, LDD, STD, LDX, STX, SWAP, MOVE, // movimentacao
+		TRAP;	// chamadas do sistema
 	}
 
 	public class CPU {
@@ -55,7 +57,7 @@ public class Sistema {
 
 		public CPU(Word[] _m) { // ref a MEMORIA e interrupt handler passada na criacao da CPU
 			m = _m; // usa o atributo 'm' para acessar a memoria.
-			reg = new int[8]; // aloca o espaÃƒÂ§o dos registradores
+			reg = new int[10]; // aloca o espaco dos registradores
 		}
 
 		public void setContext(int _pc) { // no futuro esta funcao vai ter que ser
@@ -77,7 +79,7 @@ public class Sistema {
 		private void showState() {
 			System.out.println("       " + pc);
 			System.out.print("           ");
-			for (int i = 0; i < 8; i++) {
+			for (int i = 0; i < 10; i++) {
 				System.out.print("r" + i);
 				System.out.print(": " + reg[i] + "     ");
 			}
@@ -360,6 +362,32 @@ public class Sistema {
 							interrupt = Interrupt.STOP;
 							break;
 							
+//			              --------------------------------------------------------------------------------------------------
+//			              --------------------------------------------------------------------------------------------------
+//			              Chamadas de sistema
+						case TRAP:
+							if (reg[8]==1) {							// IN
+								int valorLido = leInteiro();				// Chama o metodo que le um inteiro do teclado
+								if (valorLido>=-10000 && valorLido<=10000) { // Verifica se esta dentro do range valido
+									m[reg[9]].p = valorLido;	// Coloca o valor lido no endereco de mem. armazenado no reg. 9
+									pc++;
+								} else {
+									interrupt = Interrupt.OVERFLOW;		// Se estiver fora do range interrompe por overflow
+								}
+			
+							} else if (reg[8]==2) {			// OUT
+								int valorOut = m[reg[9]].p;			// O endereco de mem. cujo valor deve-se escrever na tela esta armazenado no reg. 9
+								escreveIntTela(valorOut);			// Chama o metodo que escreve um inteiro na tela
+								pc++;
+							} else {
+								// Caso hajam novas chamadas de sistema
+								break;
+							}
+							break;
+							
+//				              --------------------------------------------------------------------------------------------------
+//				              --------------------------------------------------------------------------------------------------
+							
 						default:	// caso a intrucao nao esteja em nenhum dos cases acima
 							interrupt = Interrupt.INSTRUCAO_INVALIDA;
 							break;
@@ -417,7 +445,7 @@ public class Sistema {
 		public CPU cpu;
 
 		public VM() {
-			// memÃƒÂ³ria
+			// memoria
 			tamMem = 1024;
 			m = new Word[tamMem]; // m ee a memoria
 			for (int i = 0; i < tamMem; i++) {
@@ -508,6 +536,25 @@ public class Sistema {
 		System.out.println("---------------------------------- apos execucao ");
 		monitor.dump(vm.m, 0, programa.length);
 	}
+	
+	public int leInteiro() {
+		Scanner ler = new Scanner(System.in);
+		System.out.print("\n");
+		System.out.println(">>> System Call: Leitura de Teclado <<<");
+		System.out.print("	>>> Insira um valor inteiro: ");
+		int valorLido = ler.nextInt();	// Le um inteiro do teclado
+		System.out.print("\n");
+		
+		return valorLido;
+	}
+	
+	public void escreveIntTela(int valorOutput) {
+		System.out.print("\n");
+		System.out.println(">>> System Call: Escrita na Tela <<<");
+		System.out.print("	>>> Valor inteiro: ");
+		System.out.print(valorOutput);
+		System.out.print("\n");
+	}
 
 	// ------------------- S I S T E M A - fim
 	// --------------------------------------------------------------
@@ -525,7 +572,8 @@ public class Sistema {
 		//s.roda(progs.PA);
 		//s.roda(progs.PB);
 		//s.roda(progs.PC);
-		s.roda(progs.InterruptionTester);
+		//s.roda(progs.InterruptionTester);
+		s.roda(progs.SystemCallTester);
 		
 	}
 	// -------------------------------------------------------------------------------------------------------
@@ -758,7 +806,7 @@ public class Sistema {
 				new Word(Opcode.DATA, -1, -1, -1), // 11 - Livre
 				new Word(Opcode.DATA, -1, -1, -1), // 12 - Livre
 				new Word(Opcode.DATA, -1, -1, -1), // 13 - Livre
-				// Programa
+				// Area de programa
 				new Word(Opcode.LDD, 4, -1, 1),     // 14 LDD - FUNCIONANDO (se insere em R4 o valor da pos. 1 da mem.)
 
 				new Word(Opcode.JMPIGK, -1, 4, 17), // 15 JMPIGK - FUNCIONANDO (se salva corretamente o valor de R4 na
@@ -819,6 +867,7 @@ public class Sistema {
 				new Word(Opcode.DATA, -1, -1, -1),	// 12
 				new Word(Opcode.DATA, -1, -1, -1),	// 13
 				
+				// Area de programa
 				new Word(Opcode.LDI, 0, -1, 1025),	// 14
 				new Word(Opcode.LDI, 1, -1, 10000),	// 15
 				new Word(Opcode.LDI, 2, -1, -1025),	// 16
@@ -894,8 +943,50 @@ public class Sistema {
 				//new Word(Opcode.JMPIGT, 1, 0, -1),	// 62
 				//--------------------------------
 				
-				new Word(Opcode.STOP, -1, -1, -1)
+				new Word(Opcode.STOP, -1, -1, -1)		// 63
 		};
 		
+		public Word[] SystemCallTester = new Word[] {
+				new Word(Opcode.JMP, -1, -1, 9), 	// 0 	// Inicia o prog. na pos. 9 da mem.
+				// Area de dados
+				new Word(Opcode.DATA, -1, -1, -1),	// 1	// Armazena input 1
+				new Word(Opcode.DATA, -1, -1, -1),	// 2	// Armazena input 2
+				new Word(Opcode.DATA, -1, -1, -1),	// 3	// Armazena input 3
+				new Word(Opcode.DATA, -1, -1, 10),	// 4	// Output 1
+				new Word(Opcode.DATA, -1, -1, -5),	// 5	// Output 2
+				new Word(Opcode.DATA, -1, -1, 310),	// 6	// Output 3
+				new Word(Opcode.DATA, -1, -1, -1),	// 7
+				new Word(Opcode.DATA, -1, -1, -1),	// 8
+				
+				// Area de programa
+				new Word(Opcode.LDI, 8, -1, 1),		// 9	// Valor para chamada de IN
+				new Word(Opcode.LDI, 9, -1, 1),		// 10	// Salva na pos. 1 de mem.
+				new Word(Opcode.TRAP, -1, -1, -1),	// 11	// Chama o sistema
+				
+				new Word(Opcode.LDI, 8, -1, 1),		// 12	// Valor para chamada de IN
+				new Word(Opcode.LDI, 9, -1, 2),		// 13	// Salva na pos. 2 de mem.
+				new Word(Opcode.TRAP, -1, -1, -1),	// 14	// Chama o sistema
+				
+				new Word(Opcode.LDI, 8, -1, 1),		// 15	// Valor para chamada de IN
+				new Word(Opcode.LDI, 9, -1, 3),		// 16	// Salva na pos. 3 de mem.
+				new Word(Opcode.TRAP, -1, -1, -1),	// 17	// Chama o sistema
+				
+				new Word(Opcode.LDI, 8, -1, 2),		// 18	// Valor para chamada de OUT
+				new Word(Opcode.LDI, 9, -1, 4),		// 19	// Escreve na tela o inteiro salvo na pos. 4 da mem.
+				new Word(Opcode.TRAP, -1, -1, -1),	// 20	// Chama o sistema
+				
+				new Word(Opcode.LDI, 8, -1, 2),		// 21	// Valor para chamada de OUT
+				new Word(Opcode.LDI, 9, -1, 5),		// 22	// Escreve na tela o inteiro salvo na pos. 5 da mem.
+				new Word(Opcode.TRAP, -1, -1, -1),	// 23	// Chama o sistema
+				
+				new Word(Opcode.LDI, 8, -1, 2),		// 24	// Valor para chamada de OUT
+				new Word(Opcode.LDI, 9, -1, 6),		// 25	// Escreve na tela o inteiro salvo na pos. 6 da mem.
+				new Word(Opcode.TRAP, -1, -1, -1),	// 26	// Chama o sistema
+				
+				new Word(Opcode.STOP, -1, -1, -1)	// 27
+		};
+		
+		}
+		
 	}
-}
+
