@@ -366,18 +366,18 @@ public class Sistema {
 //			              --------------------------------------------------------------------------------------------------
 //			              Chamadas de sistema
 						case TRAP:
-							if (reg[8]==1) {							// IN
-								int valorLido = leInteiro();				// Chama o metodo que le um inteiro do teclado
-								if (valorLido>=-10000 && valorLido<=10000) { // Verifica se esta dentro do range valido
-									m[reg[9]].p = valorLido;	// Coloca o valor lido no endereco de mem. armazenado no reg. 9
+							if (reg[8]==1) {									// IN
+								int valorLido = leInteiro();					// Chama o metodo que le um inteiro do teclado
+								if (valorLido>=-10000 && valorLido<=10000) { 	// Verifica se esta dentro do range valido
+									m[reg[9]].p = valorLido;					// Coloca o valor lido no endereco de mem. armazenado no reg. 9
 									pc++;
 								} else {
-									interrupt = Interrupt.OVERFLOW;		// Se estiver fora do range interrompe por overflow
+									interrupt = Interrupt.OVERFLOW;				// Se estiver fora do range interrompe por overflow
 								}
 			
-							} else if (reg[8]==2) {			// OUT
-								int valorOut = m[reg[9]].p;			// O endereco de mem. cujo valor deve-se escrever na tela esta armazenado no reg. 9
-								escreveIntTela(valorOut);			// Chama o metodo que escreve um inteiro na tela
+							} else if (reg[8]==2) {								// OUT
+								int valorOut = m[reg[9]].p;						// O endereco de mem. cujo valor deve-se escrever na tela esta armazenado no reg. 9
+								escreveIntTela(valorOut);						// Chama o metodo que escreve um inteiro na tela
 								pc++;
 							} else {
 								// Caso hajam novas chamadas de sistema
