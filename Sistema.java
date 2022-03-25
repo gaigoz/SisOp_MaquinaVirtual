@@ -828,70 +828,70 @@ public class Sistema {
 				new Word(Opcode.LDI, 6, -1, 0),		// 20
 				new Word(Opcode.LDI, 7, -1, 0),		// 21
 				
-				//new Word(Opcode.XXX, 3, -1, 5),		// IMPOSSIVEL DE TESTAR
+				//new Word(Opcode.XXX, 3, -1, 5),		// 22	// IMPOSSIVEL DE TESTAR
 				
 				// Instrucoes de Memoria
-				//new Word(Opcode.LDD, 1, -1, 1025),		// LDD - FUNCIONANDO
+				//new Word(Opcode.LDD, 1, -1, 1025),	// 23	// LDD - FUNCIONANDO
+				//--------------------------------	
+				//new Word(Opcode.LDX, 1, 0, -1),		// 24	// LDX - FUNCIONANDO
 				//--------------------------------
-				//new Word(Opcode.LDX, 1, 0, -1),			// LDX - FUNCIONANDO
+				//new Word(Opcode.STD, 1, 1025, -1),	//25	// STD - FUNCIONANDO
 				//--------------------------------
-				//new Word(Opcode.STD, 1, 1025, -1),		// STD - FUNCIONANDO
-				//--------------------------------
-				//new Word(Opcode.STX, 0, 1, -1),			// STX - FUNCIONANDO
+				//new Word(Opcode.STX, 0, 1, -1),		// 26	// STX - FUNCIONANDO
 				
 				// Instrucoes Aritmeticas
-				//new Word(Opcode.ADDI, 1, -1, 1),			// ADDI - FUNCIONANDO PARA OVERFLOW(+) E OVERFLOW(-)
-				//new Word(Opcode.LDI, 1, -1, -10000),	
-				//new Word(Opcode.ADDI, 1, -1, -1),
+				//new Word(Opcode.ADDI, 1, -1, 1),		// 27	// ADDI - FUNCIONANDO PARA OVERFLOW(+) E OVERFLOW(-)
+				//new Word(Opcode.LDI, 1, -1, -10000),  // 28	
+				//new Word(Opcode.ADDI, 1, -1, -1),		// 29
 				//--------------------------------
-				//new Word(Opcode.SUBI, 1, -1, -1),			// SUBI - FUNCIONANDO PARA OVERFLOW(+) E OVERFLOW(-)
-				//new Word(Opcode.LDI, 1, -1, -10000),
-				//new Word(Opcode.SUBI, 1, -1, 1),
+				//new Word(Opcode.SUBI, 1, -1, -1),		// 30	// SUBI - FUNCIONANDO PARA OVERFLOW(+) E OVERFLOW(-)
+				//new Word(Opcode.LDI, 1, -1, -10000),	// 31
+				//new Word(Opcode.SUBI, 1, -1, 1),		// 32
 				//--------------------------------
-				//new Word(Opcode.ADD, 0, 1, -1),			// ADD - FUNCIONANDO PARA OVERFLOW(+) E OVERFLOW(-)
-				//new Word(Opcode.LDI, 1, -1, -10000),
-				//new Word(Opcode.ADD, 2, 1, -1),
+				//new Word(Opcode.ADD, 0, 1, -1),		// 33	// ADD - FUNCIONANDO PARA OVERFLOW(+) E OVERFLOW(-)
+				//new Word(Opcode.LDI, 1, -1, -10000),	// 34
+				//new Word(Opcode.ADD, 2, 1, -1),		// 35
 				//--------------------------------
-				//new Word(Opcode.LDI, 1, -1, 15000),
-				//new Word(Opcode.SUB, 1, 0, -1),			// SUB - FUNCIONANDO PARA OVERFLOW(+) E OVERFLOW(-)
-				//new Word(Opcode.LDI, 1, -1, -10000),
-				//new Word(Opcode.SUB, 1, 0, -1),
+				//new Word(Opcode.LDI, 1, -1, 15000),	// 36
+				//new Word(Opcode.SUB, 1, 0, -1),		// 37	// SUB - FUNCIONANDO PARA OVERFLOW(+) E OVERFLOW(-)
+				//new Word(Opcode.LDI, 1, -1, -10000),	// 38
+				//new Word(Opcode.SUB, 1, 0, -1),		// 39
 				//--------------------------------
-				//new Word(Opcode.MULT, 0, 1, -1),			// MULT - FUNCIONANDO PARA OVERFLOW(+) E OVERFLOW(-)
-				//new Word(Opcode.MULT, 1, 2, -1),
+				//new Word(Opcode.MULT, 0, 1, -1),		// 40	// MULT - FUNCIONANDO PARA OVERFLOW(+) E OVERFLOW(-)
+				//new Word(Opcode.MULT, 1, 2, -1),		// 41
 				
 				// Instrucoes Jump
-				//new Word(Opcode.JMP, -1, -1, 1024),		// JMP - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
-				//new Word(Opcode.JMP, -1, -1, -2),
+				//new Word(Opcode.JMP, -1, -1, 1024),	// 42	// JMP - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
+				//new Word(Opcode.JMP, -1, -1, -2),		// 43
 				//--------------------------------
-				//new Word(Opcode.JMPIGK, -1, 0, 1024),		// JMPIGK - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
-				//new Word(Opcode.JMPIGK, -1, 0, -1),
+				//new Word(Opcode.JMPIGK, -1, 0, 1024),	// 44	// JMPIGK - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
+				//new Word(Opcode.JMPIGK, -1, 0, -1),	// 45
 				//--------------------------------
-				//new Word(Opcode.JMPI, 0, -1, -1),			// JMPI - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
-				//new Word(Opcode.JMPI, 2, -1, -1),
+				//new Word(Opcode.JMPI, 0, -1, -1),		// 46	// JMPI - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
+				//new Word(Opcode.JMPI, 2, -1, -1),		// 47
 				//--------------------------------
-				//new Word(Opcode.JMPIG, 0, 0, -1),			// JMPIG - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
-				//new Word(Opcode.JMPIG, 2, 0, -1),
+				//new Word(Opcode.JMPIG, 0, 0, -1),		// 48	// JMPIG - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
+				//new Word(Opcode.JMPIG, 2, 0, -1),		// 49
 				//--------------------------------
-				//new Word(Opcode.JMPIL, 0, 2, -1),			// JMPIL - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
-				//new Word(Opcode.JMPIL, 2, 2, -1),
+				//new Word(Opcode.JMPIL, 0, 2, -1),		// 50	// JMPIL - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
+				//new Word(Opcode.JMPIL, 2, 2, -1),		// 51
 				//--------------------------------
-				//new Word(Opcode.JMPIE, 0, 7, -1),			// JMPIE - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
-				//new Word(Opcode.JMPIE, 2, 7, -1),
+				//new Word(Opcode.JMPIE, 0, 7, -1),		// 52	// JMPIE - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
+				//new Word(Opcode.JMPIE, 2, 7, -1),		// 53
 				//--------------------------------
-				//new Word(Opcode.JMPIM, -1, -1, 1),		// JMPIM - TESTAR 
+				//new Word(Opcode.JMPIM, -1, -1, 1),	// 54	// JMPIM - TESTAR 
 				//--------------------------------
-				//new Word(Opcode.JMPIGM, -1, 0, 1),		// JMPIGM - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
-				//new Word(Opcode.JMPIGM, -1, 0, 2),
+				//new Word(Opcode.JMPIGM, -1, 0, 1),	// 55	// JMPIGM - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
+				//new Word(Opcode.JMPIGM, -1, 0, 2),	// 56
 				//--------------------------------
-				//new Word(Opcode.JMPILM, -1, 2, 1),		// JMPILM - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
-				//new Word(Opcode.JMPILM, -1, 2, 2),
+				//new Word(Opcode.JMPILM, -1, 2, 1),	// 57	// JMPILM - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
+				//new Word(Opcode.JMPILM, -1, 2, 2),	// 58
 				//--------------------------------
-				//new Word(Opcode.JMPIEM, -1, 7, 1),		// JMPIEM - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
-				//new Word(Opcode.JMPIEM, -1, 7, 2),
+				//new Word(Opcode.JMPIEM, -1, 7, 1),	// 59	// JMPIEM - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
+				//new Word(Opcode.JMPIEM, -1, 7, 2),	// 60
 				//--------------------------------
-				//new Word(Opcode.JMPIGT, 1, 0, 1025),		// JMPIGT - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
-				//new Word(Opcode.JMPIGT, 1, 0, -1),
+				//new Word(Opcode.JMPIGT, 1, 0, 1025),	// 61	// JMPIGT - FUNCIONANDO PARA ENDERECO(+) E ENDERECO(-)
+				//new Word(Opcode.JMPIGT, 1, 0, -1),	// 62
 				//--------------------------------
 				
 				new Word(Opcode.STOP, -1, -1, -1)
