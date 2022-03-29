@@ -56,8 +56,6 @@ public class Sistema {
 		private Word[] m; // CPU acessa MEMORIA, guarda referencia 'm' a ela. memoria nao muda. ee sempre
 							// a mesma.
 
-		// interrupcoes
-
 		public CPU(Word[] _m) { // ref a MEMORIA e interrupt handler passada na criacao da CPU
 			m = _m; // usa o atributo 'm' para acessar a memoria.
 			reg = new int[10]; // aloca o espaco dos registradores
@@ -105,8 +103,6 @@ public class Sistema {
 				showState();
 				// EXECUTA INSTRUCAO NO ir
 				switch (ir.opc) { // para cada opcode, sua execucao
-					// --------------------------------------------------------------------------------------------------
-					// --------------------------------------------------------------------------------------------------
 					// Instrucoes de Memoria
 					case LDI: // Rd <- k
 						reg[ir.r1] = ir.p;
@@ -370,24 +366,7 @@ public class Sistema {
 					// --------------------------------------------------------------------------------------------------
 					// Chamadas de sistema
 					case TRAP:
-						if (reg[8] == 1) { // IN
-							int valorLido = leInteiro(); // Chama o metodo que le um inteiro do teclado
-							if (valorLido >= -10000 && valorLido <= 10000) { // Verifica se esta dentro do range valido
-								m[reg[9]].p = valorLido; // Coloca o valor lido no endereco de mem. armazenado no reg. 9
-								pc++;
-							} else {
-								interrupt = Interrupt.OVERFLOW; // Se estiver fora do range interrompe por overflow
-							}
-
-						} else if (reg[8] == 2) { // OUT
-							int valorOut = m[reg[9]].p; // O endereco de mem. cujo valor deve-se escrever na tela esta
-														// armazenado no reg. 9
-							escreveIntTela(valorOut); // Chama o metodo que escreve um inteiro na tela
-							pc++;
-						} else {
-							// Caso hajam novas chamadas de sistema
-							break;
-						}
+						chamaSistema();
 						break;
 
 					// --------------------------------------------------------------------------------------------------
@@ -564,6 +543,30 @@ public class Sistema {
 				break;
 		}
 	}
+	
+public void chamaSistema() {
+	
+	CPU cpuAccess = vm.cpu;
+	
+	if (cpuAccess.reg[8] == 1) { // IN
+		int valorLido = leInteiro(); // Chama o metodo que le um inteiro do teclado
+		if (valorLido >= -10000 && valorLido <= 10000) { // Verifica se esta dentro do range valido
+			cpuAccess.m[cpuAccess.reg[9]].p = valorLido; // Coloca o valor lido no endereco de mem. armazenado no reg. 9
+			cpuAccess.pc++;
+		} else {
+			interrupt = Interrupt.OVERFLOW; // Se estiver fora do range interrompe por overflow
+		}
+
+	} else if (cpuAccess.reg[8] == 2) { // OUT
+		int valorOut = cpuAccess.m[cpuAccess.reg[9]].p; // O endereco de mem. cujo valor deve-se escrever na tela esta
+									// armazenado no reg. 9
+		escreveIntTela(valorOut); // Chama o metodo que escreve um inteiro na tela
+		cpuAccess.pc++;
+	} else {
+		// Caso hajam novas chamadas de sistema
+	}
+		
+}
 
 	// ------------------- S I S T E M A - fim
 	// --------------------------------------------------------------
@@ -581,7 +584,7 @@ public class Sistema {
 		// s.roda(progs.PA);
 		// s.roda(progs.PB);
 		// s.roda(progs.PC);
-		// s.roda(progs.InterruptionTester);
+		//s.roda(progs.InterruptionTester);
 		s.roda(progs.SystemCallTester);
 
 	}
@@ -876,9 +879,9 @@ public class Sistema {
 				// new Word(Opcode.XXX, 3, -1, 5), // 22 // IMPOSSIVEL DE TESTAR
 
 				// Instrucoes de Memoria
-				// new Word(Opcode.LDD, 1, -1, 1025), // 23 // LDD - FUNCIONANDO
+				//new Word(Opcode.LDD, 1, -1, 1025), // 23 // LDD - FUNCIONANDO
 				// --------------------------------
-				// new Word(Opcode.LDX, 1, 0, -1), // 24 // LDX - FUNCIONANDO
+				//new Word(Opcode.LDX, 1, 0, -1), // 24 // LDX - FUNCIONANDO
 				// --------------------------------
 				// new Word(Opcode.STD, 1, 1025, -1), //25 // STD - FUNCIONANDO
 				// --------------------------------
