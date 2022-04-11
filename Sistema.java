@@ -404,7 +404,7 @@ public class Sistema {
 			}
 			;
 			// cpu
-			cpu = new CPU(m); // cpu acessa memÃƒÂ³ria
+			cpu = new CPU(m); // cpu acessa memoria
 		}
 	}
 
@@ -463,6 +463,27 @@ public class Sistema {
 							// nao ha protecoes... o que poderia acontecer ?
 		}
 
+	}
+	
+	public class gerenteDeMemoria {
+						
+			int tamMem = vm.tamMem;
+
+			Word[] mem = new Word[tamMem]; {
+				for (int x = 0; x < tamMem; x++) {
+					mem[x] = new Word(Opcode.___, -1, -1, -1);
+				}
+			}
+			
+			int tamPag = 16;
+			int tamFrame = tamPag;
+			int nroFrames = tamMem/tamPag;
+			
+			boolean[] frameLivre = new boolean[nroFrames]; {
+				for (int i = 0; i < nroFrames; i++) {
+					frameLivre[i] = true;
+				}
+			}
 	}
 	// -------------------------------------------
 
