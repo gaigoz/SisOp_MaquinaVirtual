@@ -465,25 +465,61 @@ public class Sistema {
 
 	}
 	
-	public class gerenteDeMemoria {
-						
-			int tamMem = vm.tamMem;
-
-			Word[] mem = new Word[tamMem]; {
-				for (int x = 0; x < tamMem; x++) {
-					mem[x] = new Word(Opcode.___, -1, -1, -1);
-				}
-			}
-			
+	public class gerenteDeMemoria {				
+			int tamMem = vm.tamMem;			
 			int tamPag = 16;
 			int tamFrame = tamPag;
 			int nroFrames = tamMem/tamPag;
 			
-			boolean[] frameLivre = new boolean[nroFrames]; {
-				for (int i = 0; i < nroFrames; i++) {
-					frameLivre[i] = true;
-				}
+			Word[] mem = new Word[tamMem];
+			boolean[] frames = new boolean[nroFrames]; // if TRUE=livre, if FALSE=ocupado
+			
+			public gerenteDeMemoria() { 
+					for (int x = 0; x < tamMem; x++) {
+						mem[x] = new Word(Opcode.___, -1, -1, -1);
+					}
+				
+					for (int i = 0; i < nroFrames; i++) {
+						frames[i] = false;
+					}	
 			}
+			
+			public boolean aloca(int nroPalavras) {
+
+				double nroPaginas = nroPalavras/16;
+				double nroFrames = nroPaginas;
+				
+				bollean verificaAlocacao = verificaSePodeAlocar(nroFrames);
+				if(verificaAlocacao == true) {
+					
+				} else {
+					
+				}
+				
+			}
+			
+			public int contaFramesLivres() {
+				int contaFramesLivres = 0;
+				for (int i = 0; i < nroFrames; i++) {
+					if(frames[i] == true) {
+						contaFramesLivres++;
+					}	
+				}
+				return contaFramesLivres;
+			}
+			
+			public boolean verificaSePodeAlocar(double nroFrames) {
+				double framesLivres = new double(9contaFramesLivres());
+				
+				if((contaFramesLivres-nroFrames) > 0) {
+					return true
+				} else {
+					return false
+				}	
+			}
+			
+			
+			
 	}
 	// -------------------------------------------
 
