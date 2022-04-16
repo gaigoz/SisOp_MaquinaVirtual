@@ -465,16 +465,18 @@ public class Sistema {
 
 	}
 	
-	public class gerenteDeMemoria {				
+	public class GerenteDeMemoria {				
 			int tamMem = vm.tamMem;			
 			int tamPag = 16;
 			int tamFrame = tamPag;
 			int nroFrames = tamMem/tamPag;
 			
 			Word[] mem = new Word[tamMem];
-			boolean[] frames = new boolean[nroFrames]; // if TRUE=livre, if FALSE=ocupado
+			boolean[] frames = new boolean[nroFrames]; // if TRUE=ocupado, if FALSE=livre
+			int[] tabelaPaginas = new int[nroFrames];
+			int tamTabelaPaginas = 0;
 			
-			public gerenteDeMemoria() { 
+			public GerenteDeMemoria() { 
 					for (int x = 0; x < tamMem; x++) {
 						mem[x] = new Word(Opcode.___, -1, -1, -1);
 					}
@@ -482,40 +484,118 @@ public class Sistema {
 					for (int i = 0; i < nroFrames; i++) {
 						frames[i] = false;
 					}	
+					
+					for (int i = 0; i < nroFrames; i++) {
+						tabelaPaginas[i] = 0;
+					}
 			}
 			
-			public boolean aloca(int nroPalavras) {
-
-				double nroPaginas = nroPalavras/16;
-				double nroFrames = nroPaginas;
+			public int[] aloca(int nroPalavras) {
 				
-				bollean verificaAlocacao = verificaSePodeAlocar(nroFrames);
-				if(verificaAlocacao == true) {
-					
+				System.out.print("aloca ");
+				System.out.print(nroPalavras);
+				System.out.println(" palavras");
+				
+				double localNroPalavras = nroPalavras;
+				
+				double nroPaginas = localNroPalavras/16;
+				System.out.print("NUMERO PAGINAS APOS DIVISAO: ");
+				System.out.println(nroPaginas);
+				
+				if(nroPaginas>Math.floor(nroPaginas)) {
+					// SE FOR UM VALOR QUEBRADO, ARREDONDA PARA CIMA
+					nroPaginas = Math.ceil(nroPaginas);
 				} else {
-					
+					// SE FOR UM VALOR INTEIRO NAO FAZ NADA
 				}
+
+				double nroFrames = nroPaginas;
+				System.out.print("VAI PRECISAR DE ");
+				System.out.print(nroFrames);
+				System.out.println(" FRAMES");
+				
+				
+				boolean verificaAlocacao = verificaSePodeAlocar(nroFrames);
+				if(verificaAlocacao == true) {
+					System.out.println("verifica alocacao true");
+					System.out.print("Nro frames: ");
+					System.out.println(nroFrames);
+					
+					for(int i=0; i<nroFrames; i++) {
+						System.out.print("i=");
+						System.out.println(i);
+						
+						if(frames[i] == true) { // se ocupado avanca no vetor
+							System.out.println("frame ocupado");
+							nroFrames++;
+						} else {
+							System.out.println("frame livre");
+							frames[i]=true;	// se livre, ocupa e adiciona na tabela de paginas
+							System.out.print("OCUPANDO O FRAME ");
+							System.out.println(i);
+							
+							//printaFrame();
+
+							tabelaPaginas[tamTabelaPaginas] = i;
+							tamTabelaPaginas++;
+						}	
+					}
+					System.out.print("Tamanho tab pag: ");
+					System.out.println(tamTabelaPaginas);
+					printaTabelaPaginas(tamTabelaPaginas);
+					return tabelaPaginas;
+				} else {
+					System.out.println("verifica alocacao false");
+					return tabelaPaginas;
+				}			
 				
 			}
 			
 			public int contaFramesLivres() {
+				System.out.println("conta frames livres");
 				int contaFramesLivres = 0;
 				for (int i = 0; i < nroFrames; i++) {
-					if(frames[i] == true) {
+					if(frames[i] == false) {
 						contaFramesLivres++;
 					}	
 				}
+				System.out.print("conta frames livres: ");
+				System.out.println(contaFramesLivres);
 				return contaFramesLivres;
 			}
 			
 			public boolean verificaSePodeAlocar(double nroFrames) {
-				double framesLivres = new double(9contaFramesLivres());
+				System.out.print("verifica se pode alocar ");
+				System.out.print(nroFrames);
+				System.out.println(" frame(s)");
+				double framesLivres = contaFramesLivres();
+				System.out.print("frames livres: ");
+				System.out.println(framesLivres);
 				
-				if((contaFramesLivres-nroFrames) > 0) {
-					return true
+				if((framesLivres-nroFrames) > 0) {
+					return true;
 				} else {
-					return false
+					return false;
 				}	
+			}
+			
+			public void printaFrame() {
+				for(int i=0; i<nroFrames ; i++) {
+					System.out.print("[");
+					System.out.print(i);
+					System.out.print("] :");
+					System.out.println(frames[i]);
+				}
+			}
+			
+			public void printaTabelaPaginas(int n) {
+				System.out.println("TABELA DE PAGINAS:");
+				for(int i=0; i<n ; i++) {
+					System.out.print("[");
+					System.out.print(i);
+					System.out.print("] :");
+					System.out.println(tabelaPaginas[i]);
+				}
 			}
 			
 			
@@ -529,11 +609,13 @@ public class Sistema {
 
 	public VM vm;
 	public Monitor monitor;
+	public GerenteDeMemoria gerenteMemoria;
 	public static Programas progs;
 
 	public Sistema() { // a VM com tratamento de interrupcoes
 		vm = new VM();
 		monitor = new Monitor();
+		gerenteMemoria = new GerenteDeMemoria();
 		progs = new Programas();
 	}
 
@@ -642,7 +724,13 @@ public void chamaSistema() {
 		// s.roda(progs.PB);
 		// s.roda(progs.PC);
 		//s.roda(progs.InterruptionTester);
-		s.roda(progs.SystemCallTester);
+		//s.roda(progs.SystemCallTester);
+		
+		s.gerenteMemoria.aloca(150);
+		s.gerenteMemoria.aloca(30);
+		s.gerenteMemoria.aloca(10);
+		
+		
 
 	}
 	// -------------------------------------------------------------------------------------------------------
