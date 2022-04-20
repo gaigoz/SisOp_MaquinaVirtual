@@ -97,14 +97,13 @@ public class Sistema {
 			interrupt = Interrupt.NULL;
 
 			while (interrupt == Interrupt.NULL) { // ciclo de instrucoes. acaba cfe instrucao, veja cada caso.
-				int tamTabela = vm.gerenteMemoria.tamTabelaPaginas;
-				int indiceFrameAtual = 0;
+				int indiceFrameAtual = vm.gerenteMemoria.indexForFrames;
 				int frameDaTabela = vm.gerenteMemoria.tabelaPaginas[indiceFrameAtual];	
 				
 				Frame[] frames = vm.gerenteMemoria.frames;
 				
-				System.out.print("pc: ");
-				System.out.println(pc);
+				// printDebugRuntime(indiceFrameAtual, frameDaTabela);
+				
 				//ir = m[pc]; // FETCH - busca posicao da memoria apontada por pc, guarda em ir
 				ir = frames[frameDaTabela].pagina[pc]; // aponta para a primeira pos do primeiro frame, segundo a tabela de frames
 				
@@ -121,8 +120,10 @@ public class Sistema {
 						break;
 
 					case LDD: // Rd <- [A]
+						
 						if (ir.p >= 0 && ir.p <= 1023) {
-							reg[ir.r1] = vm.gerenteMemoria.traduzEndereco(ir.p).p;
+							Word wordEfetivaTraduzida = vm.gerenteMemoria.traduzEndereco(ir.p, "AM");
+							reg[ir.r1] = wordEfetivaTraduzida.p;
 							pc++;
 							checaPC(pc);
 						} else {
@@ -132,19 +133,23 @@ public class Sistema {
 
 					case LDX: // RD <- [RS] // NOVA
 						if (reg[ir.r2] >= 0 && reg[ir.r2] <= 1023) {
-							reg[ir.r1] = vm.gerenteMemoria.traduzEndereco(reg[ir.r2]).p;
+							Word wordEfetivaTraduzida = vm.gerenteMemoria.traduzEndereco(reg[ir.r2], "AM");
+							reg[ir.r1] = wordEfetivaTraduzida.p;
 							pc++;
 							checaPC(pc);
 						} else {
+							System.out.println(reg[ir.r2]);
+
 							interrupt = Interrupt.ENDERECO_INVALIDO;
 						}
 						break;
 
 					case STD: // [A] <- Rs
 						if (ir.p >= 0 && ir.p <= 1023) {
-							vm.gerenteMemoria.traduzEndereco(ir.p).opc = Opcode.DATA;
-							System.out.print(vm.gerenteMemoria.traduzEndereco(ir.p));
-							vm.gerenteMemoria.traduzEndereco(ir.p).p = reg[ir.r1];
+							Word wordEfetivaTraduzida = vm.gerenteMemoria.traduzEndereco(ir.p, "AM");
+							wordEfetivaTraduzida.opc = Opcode.DATA;
+							System.out.print(wordEfetivaTraduzida);
+							wordEfetivaTraduzida.p = reg[ir.r1];
 							pc++;
 							checaPC(pc);
 						} else {
@@ -154,8 +159,9 @@ public class Sistema {
 
 					case STX: // [Rd] <- Rs
 						if (reg[ir.r1] >= 0 && reg[ir.r1] <= 1023) {
-							vm.gerenteMemoria.traduzEndereco(reg[ir.r1]).opc = Opcode.DATA;
-							vm.gerenteMemoria.traduzEndereco(reg[ir.r1]).p = reg[ir.r2];
+							Word wordEfetivaTraduzida = vm.gerenteMemoria.traduzEndereco(reg[ir.r1], "AM");
+							wordEfetivaTraduzida.opc = Opcode.DATA;
+							wordEfetivaTraduzida.p = reg[ir.r2];
 							pc++;
 							checaPC(pc);
 						} else {
@@ -223,7 +229,8 @@ public class Sistema {
 					// Instrucoes JUMP
 					case JMP: // PC <- k
 						if (ir.p >= 0 && ir.p <= 1023) {
-							pc = ir.p;
+							vm.gerenteMemoria.traduzEndereco(ir.p, "JMP");
+							//pc = ir.p;
 						} else {
 							interrupt = Interrupt.ENDERECO_INVALIDO;
 						}
@@ -232,7 +239,8 @@ public class Sistema {
 					case JMPIGK: // If RC > 0 then PC <- k else PC++
 						if (ir.p >= 0 && ir.p <= 1023) {
 							if (reg[ir.r2] > 0) {
-								pc = ir.p;
+								vm.gerenteMemoria.traduzEndereco(ir.p, "JMP");
+								//pc = ir.p;
 							} else {
 								pc++;
 								checaPC(pc);
@@ -246,7 +254,8 @@ public class Sistema {
 					case JMPILK: // If RC < 0 then PC <- k else PC++
 						if (ir.p >= 0 && ir.p <= 1023) {
 							if (reg[ir.r2] < 0) {
-								pc = ir.p;
+								vm.gerenteMemoria.traduzEndereco(ir.p, "JMP");
+								//pc = ir.p;
 							} else {
 								pc++;
 								checaPC(pc);
@@ -260,7 +269,8 @@ public class Sistema {
 					case JMPIEK: // If RC = 0 then PC <- k else PC++
 						if (ir.p >= 0 && ir.p <= 1023) {
 							if (reg[ir.r2] == 0) {
-								pc = ir.p;
+								vm.gerenteMemoria.traduzEndereco(ir.p, "JMP");
+								//pc = ir.p;
 							} else {
 								pc++;
 								checaPC(pc);
@@ -273,7 +283,8 @@ public class Sistema {
 
 					case JMPI: // PC <- Rs
 						if (reg[ir.r1] >= 0 && reg[ir.r1] <= 1023) {
-							pc = reg[ir.r1];
+							vm.gerenteMemoria.traduzEndereco(reg[ir.r1], "JMP");
+							//pc = reg[ir.r1];
 						} else {
 							interrupt = Interrupt.ENDERECO_INVALIDO;
 						}
@@ -282,7 +293,8 @@ public class Sistema {
 					case JMPIG: // If RC > 0 then PC<-RS else PC++
 						if (reg[ir.r1] >= 0 && reg[ir.r1] <= 1023) {
 							if (reg[ir.r2] > 0) {
-								pc = reg[ir.r1];
+								vm.gerenteMemoria.traduzEndereco(reg[ir.r1], "JMP");
+								//pc = reg[ir.r1];
 							} else {
 								pc++;
 								checaPC(pc);
@@ -296,7 +308,8 @@ public class Sistema {
 					case JMPIL: // if Rc < 0 then PC <- Rs Else PC <- PC +1
 						if (reg[ir.r1] >= 0 && reg[ir.r1] <= 1023) {
 							if (reg[ir.r2] < 0) {
-								pc = reg[ir.r1];
+								vm.gerenteMemoria.traduzEndereco(reg[ir.r1], "JMP");
+								//pc = reg[ir.r1];
 							} else {
 								pc++;
 								checaPC(pc);
@@ -310,7 +323,8 @@ public class Sistema {
 					case JMPIE: // If Rc = 0 Then PC <- Rs Else PC <- PC +1
 						if (reg[ir.r1] >= 0 && reg[ir.r1] <= 1023) {
 							if (reg[ir.r2] == 0) {
-								pc = reg[ir.r1];
+								vm.gerenteMemoria.traduzEndereco(reg[ir.r1], "JMP");
+								//pc = reg[ir.r1];
 							} else {
 								pc++;
 								checaPC(pc);
@@ -323,7 +337,9 @@ public class Sistema {
 
 					case JMPIM: // PC <- [A]
 						if (ir.p >= 0 && ir.p <= 1023) {
-							pc = m[ir.p].p;
+							Word wordEfetivaTraduzida = vm.gerenteMemoria.traduzEndereco(ir.p, "AM");
+							vm.gerenteMemoria.traduzEndereco(wordEfetivaTraduzida.p, "JMP");
+							//pc = wordEfetivaTraduzida.p;
 						} else {
 							interrupt = Interrupt.ENDERECO_INVALIDO;
 						}
@@ -331,7 +347,9 @@ public class Sistema {
 					case JMPIGM: // If RC > 0 then PC <- [A] else PC++
 						if (ir.p >= 0 && ir.p <= 1023) {
 							if (reg[ir.r2] > 0) {
-								pc = m[ir.p].p;
+								Word wordEfetivaTraduzida = vm.gerenteMemoria.traduzEndereco(ir.p, "AM");
+								vm.gerenteMemoria.traduzEndereco(wordEfetivaTraduzida.p, "JMP");
+								//pc = m[ir.p].p;
 							} else {
 								pc++;
 								checaPC(pc);
@@ -345,7 +363,9 @@ public class Sistema {
 					case JMPILM: // If RC < 0 then PC <- k else PC++
 						if (ir.p >= 0 && ir.p <= 1023) {
 							if (reg[ir.r2] < 0) {
-								pc = m[ir.p].p;
+								Word wordEfetivaTraduzida = vm.gerenteMemoria.traduzEndereco(ir.p, "AM");
+								vm.gerenteMemoria.traduzEndereco(wordEfetivaTraduzida.p, "JMP");
+								//pc = m[ir.p].p;
 							} else {
 								pc++;
 								checaPC(pc);
@@ -359,7 +379,9 @@ public class Sistema {
 					case JMPIEM: // If RC = 0 then PC <- k else PC++
 						if (ir.p >= 0 && ir.p <= 1023) {
 							if (reg[ir.r2] == 0) {
-								pc = m[ir.p].p;
+								Word wordEfetivaTraduzida = vm.gerenteMemoria.traduzEndereco(ir.p, "AM");
+								vm.gerenteMemoria.traduzEndereco(wordEfetivaTraduzida.p, "JMP");
+								//pc = m[ir.p].p;
 							} else {
 								pc++;
 								checaPC(pc);
@@ -373,7 +395,8 @@ public class Sistema {
 					case JMPIGT: // If RS>RC then PC <- k else PC++
 						if (ir.p >= 0 && ir.p <= 1023) {
 							if (reg[ir.r1] > reg[ir.r2]) {
-								pc = ir.p;
+								vm.gerenteMemoria.traduzEndereco(ir.p, "JMP");
+								//pc = ir.p;
 							} else {
 								pc++;
 								checaPC(pc);
@@ -412,6 +435,15 @@ public class Sistema {
 				// VERIFICA INTERRUPCAO !!! - TERCEIRA FASE DO CICLO DE INSTRUCOES
 				trataInterrupcao(interrupt);
 			}
+		}
+		
+		public void printDebugRuntime(int indiceFrameAtual, int frameDaTabela){
+			System.out.println("\n");
+			System.out.println("---- DEBUG PAGINACAO EM RUNTIME ----");
+			System.out.print("-> Frame atual: ");
+			System.out.println(frameDaTabela);
+			System.out.println("------------------------------------");
+			System.out.println("\n");
 		}
 	}
 	// ------------------ C P U - fim
@@ -515,7 +547,7 @@ public class Sistema {
 			}
 				
 			}
-			vm.gerenteMemoria.printaFrames();
+			vm.gerenteMemoria.printaFramesDaTabelaPaginas();;
 			
 		}
 
@@ -557,6 +589,9 @@ public class Sistema {
 			int[] tabelaPaginas;
 			int tamTabelaPaginas = 0;
 			
+			int framesLivres = 0;
+			boolean podeAlocar;
+						
 			public GerenteDeMemoria(int tamMem) { 
 					this.tamMem = tamMem;
 					pagina = new Word[tamPag];
@@ -604,15 +639,9 @@ public class Sistema {
 			
 			public int[] aloca(int nroPalavras) {
 				
-				System.out.print("aloca ");
-				System.out.print(nroPalavras);
-				System.out.println(" palavras");
-				
 				double localNroPalavras = nroPalavras;
 				
 				double nroPaginas = localNroPalavras/16;
-				System.out.print("NUMERO PAGINAS APOS DIVISAO: ");
-				System.out.println(nroPaginas);
 				
 				if(nroPaginas>Math.floor(nroPaginas)) {
 					// SE FOR UM VALOR QUEBRADO, ARREDONDA PARA CIMA
@@ -622,45 +651,28 @@ public class Sistema {
 				}
 
 				double nroFrames = nroPaginas;
-				System.out.print("VAI PRECISAR DE ");
-				System.out.print(nroFrames);
-				System.out.println(" FRAMES");
-				
-				
+						
 				boolean verificaAlocacao = verificaSePodeAlocar(nroFrames);
+				podeAlocar = verificaAlocacao;
 				if(verificaAlocacao == true) {
-					System.out.println("verifica alocacao true");
-					System.out.print("Nro frames: ");
-					System.out.println(nroFrames);
 					
 					for(int i=0; i<nroFrames; i++) {
-						System.out.print("i=");
-						System.out.println(i);
 						
 						if(framesBool[i] == true) { // se ocupado avanca no vetor
-							System.out.println("frame ocupado");
 							nroFrames++;
 						} else {
-							System.out.println("frame livre");
 							framesBool[i]=true;	// se livre, ocupa e adiciona na tabela de paginas
-							System.out.print("OCUPANDO O FRAME ");
-							System.out.println(i);
-							
-							//printaFrame();
 
 							tabelaPaginas[tamTabelaPaginas] = i;
 							tamTabelaPaginas++;
 						}	
 					}
-					System.out.print("Tamanho tab pag: ");
-					System.out.println(tamTabelaPaginas);
-					printaTabelaPaginas(tamTabelaPaginas);
+					printaTerminalAlocacao(nroPalavras);
 					return tabelaPaginas;
 				} else {
-					System.out.println("verifica alocacao false");
+					printaTerminalAlocacao(nroPalavras);
 					return tabelaPaginas;
-				}			
-				
+				}	
 			}
 			
 			public void desaloca() {
@@ -670,31 +682,87 @@ public class Sistema {
 			}
 			
 			public int contaFramesLivres() {
-				System.out.println("conta frames livres");
 				int contaFramesLivres = 0;
 				for (int i = 0; i < nroFrames; i++) {
 					if(framesBool[i] == false) {
 						contaFramesLivres++;
+						framesLivres++;
 					}	
 				}
-				System.out.print("conta frames livres: ");
-				System.out.println(contaFramesLivres);
 				return contaFramesLivres;
 			}
 			
 			public boolean verificaSePodeAlocar(double nroFrames) {
-				System.out.print("verifica se pode alocar ");
-				System.out.print(nroFrames);
-				System.out.println(" frame(s)");
 				double framesLivres = contaFramesLivres();
-				System.out.print("frames livres: ");
-				System.out.println(framesLivres);
 				
 				if((framesLivres-nroFrames) > 0) {
 					return true;
 				} else {
 					return false;
 				}	
+			}
+			
+			public void printaTerminalAlocacao(int nroPalavras) {
+				double localNroPalavras = nroPalavras;
+				double nroPaginas = localNroPalavras/16;
+				
+				if(nroPaginas>Math.floor(nroPaginas)) {
+					// SE FOR UM VALOR QUEBRADO, ARREDONDA PARA CIMA
+					nroPaginas = Math.ceil(nroPaginas);
+				} else {
+					// SE FOR UM VALOR INTEIRO NAO FAZ NADA
+				}
+
+				double nroFrames = nroPaginas;	
+				
+				System.out.print("\n");
+				System.out.println("============== REQUISICAO DE ALOCACAO ==============");
+				
+				System.out.print("\n");
+				System.out.print("-> Deseja-se alocar ");
+				System.out.print(nroPalavras);
+				System.out.println(" palavras;");
+				
+				System.out.print("\n");
+				System.out.print("-> O tamanho atual da pagina eh de ");
+				System.out.print(tamPag);
+				System.out.println(" palavras;");
+				
+				System.out.print("     -> Logo, precisa-se de ");
+				System.out.print(nroFrames);
+				System.out.println(" paginas;");
+				
+				System.out.print("\n");
+				System.out.println("-> Cada frame tem exatamente 01 pagina;");
+				System.out.print("     -> Logo, precisa-se de ");
+				System.out.print(nroFrames);
+				System.out.println(" frames;");
+				
+				System.out.print("\n");
+				System.out.print("-> Dos ");
+				System.out.print(vm.gerenteMemoria.nroFrames);
+				System.out.println(" que o sistema dispoe:");
+				
+				System.out.print("     -> ");
+				System.out.print(framesLivres);
+				System.out.println(" esta(o) livre(s);");
+				
+				if(podeAlocar==true){
+					System.out.print("\n");
+					System.out.println("-> REQUISICAO DE ALOCACAO AUTORIZADA!");
+				} else {
+					System.out.print("\n");
+					System.out.println("-> REQUISICAO DE ALOCACAO NEGADA");
+				}
+				
+				System.out.print("\n");
+				System.out.println("-> Tabela de Paginas gerada:");
+				printaTabelaPaginas(tamTabelaPaginas);
+				
+				System.out.print("\n");
+				System.out.println("==========================================");
+				System.out.print("\n");
+				System.out.print("\n");
 			}
 			
 			public void printaFrameBool() {
@@ -725,39 +793,93 @@ public class Sistema {
 				}
 			}
 			
-			public void printaTabelaPaginas(int n) {
-				System.out.println("TABELA DE PAGINAS:");
-				for(int i=0; i<n ; i++) {
-					System.out.print("pg ");
-					System.out.print("[");
-					System.out.print(i);
-					System.out.print("] : ");
-					System.out.println(tabelaPaginas[i]);
+			public void printaFramesDaTabelaPaginas() {
+				System.out.println("\n");
+				for(int i=0; i<tamTabelaPaginas ; i++) {
+					System.out.print("---------------- FRAME[");
+					System.out.print(tabelaPaginas[i]);
+					System.out.println("] ----------------");
+					for(int j=0; j<tamPag; j++) {
+						System.out.print("   [");
+						System.out.print(j);
+						System.out.print("] ");
+						System.out.print(vm.gerenteMemoria.frames[tabelaPaginas[i]].pagina[j].opc); 
+						System.out.print("  ");
+						System.out.print(vm.gerenteMemoria.frames[tabelaPaginas[i]].pagina[j].r1); 
+						System.out.print(" ");
+						System.out.print(vm.gerenteMemoria.frames[tabelaPaginas[i]].pagina[j].r2); 
+						System.out.print(" ");
+						System.out.println(vm.gerenteMemoria.frames[tabelaPaginas[i]].pagina[j].p);
+					}
+					System.out.println("\n");
 				}
 			}
 			
-			public Word traduzEndereco(int logicAddress) {
+			public void printaTabelaPaginas(int n) {
+				System.out.println("     --------------");
+				System.out.println("     | PG | FRAME |");
+				System.out.println("     --------------");
+				for(int i=0; i<n ; i++) {	
+					
+					System.out.print("     | ");
+					System.out.print(i);
+					System.out.print(" |   ");
+					System.out.print(tabelaPaginas[i]);
+					System.out.println("   |");
+					System.out.println("     --------------");
+				}
+			}
+			
+			public Word traduzEndereco(int logicAddress, String opType) {
 				int p = logicAddress/tamPag;
 				int offset = logicAddress%tamPag;
-				
-				Word conteudo = vm.gerenteMemoria.frames[p].pagina[offset];
-				
+				int tabelaNro = tabelaPaginas[p];
+				Word wordNaPosEfetiva = vm.gerenteMemoria.frames[tabelaNro].pagina[offset];
 				int effectiveAddress = (tabelaPaginas[p]*tamFrame) + offset;
+	
+				switch (opType) {	// DAM = "Doesn't Access Memory"
+									// AM = "Access Memory"
+									// JMP = Jump
 				
-				System.out.print("TRADUZ A: ");
+					case "AM":
+						printDebugTraducao(logicAddress, p, offset, tabelaNro, wordNaPosEfetiva, effectiveAddress);
+						return wordNaPosEfetiva;
+						
+					case "JMP":
+						mudaPC(p, offset);
+						return wordNaPosEfetiva;
+						
+					default:
+						break;
+				}
+				
+				return wordNaPosEfetiva;
+			}
+			
+			public void printDebugTraducao(int logicAddress, int p, int offset, int tabelaNro, Word wordNaPosEfetiva, int effectiveAddress) {
+				System.out.print("\n");
+				System.out.println("---- DEBUG TRADUCAO ----");
+				System.out.print("-> Endereco a ser traduzido: ");
 				System.out.println(logicAddress);
-				System.out.print("PARA EFFECTIVE: ");
+				System.out.print("-> Traduzido para: ");
 				System.out.println(effectiveAddress);
-				System.out.print("CONTEUDO: ");
-				System.out.print(conteudo.opc);
-				System.out.print(" ");
-				System.out.print(conteudo.r1);
-				System.out.print(" ");
-				System.out.print(conteudo.r2);
-				System.out.print(" ");
-				System.out.println(conteudo.p);
+				System.out.println("-> Endereco encontra-se: ");
+				System.out.print("     -> Frame: ");
+				System.out.println(tabelaNro);
+				System.out.print("     -> Linha: ");
+				System.out.print(offset);
+				System.out.println("  (conta a partir de 0)");
 				
-				return conteudo;
+				System.out.print("-> Conteudo da posicao traduzida: ");
+				System.out.print(wordNaPosEfetiva.opc);
+				System.out.print(" ");
+				System.out.print(wordNaPosEfetiva.r1);
+				System.out.print(" ");
+				System.out.print(wordNaPosEfetiva.r2);
+				System.out.print(" ");
+				System.out.println(wordNaPosEfetiva.p);
+				System.out.println("------------------------");
+				System.out.print("\n");
 			}
 			
 			
@@ -781,15 +903,15 @@ public class Sistema {
 	}
 
 	public void roda(Word[] programa) {
-		vm.gerenteMemoria.aloca(programa.length);
-
+		vm.gerenteMemoria.aloca(programa.length); // Requisicao de alocacao
 		System.out.println("---------------------------------- programa alocado ");
 		monitor.carga(programa, vm.m);
 		System.out.println("---------------------------------- programa carregado ");
 		monitor.dump(vm.m, 0, programa.length);
 		monitor.executa();
 		System.out.println("---------------------------------- apos execucao ");
-		monitor.dump(vm.m, 0, programa.length);
+		//monitor.dump(vm.m, 0, programa.length);
+		vm.gerenteMemoria.printaFramesDaTabelaPaginas();
 	}
 
 	public int leInteiro() {
@@ -850,16 +972,30 @@ public class Sistema {
 public void checaPC(int pc) {
 	int tamPagina = vm.gerenteMemoria.tamPag;
 
-	if(pc>=(tamPagina)) {
-		System.out.println("entrei");
+	if(pc>=tamPagina) {
+		System.out.print("entrei");
 		vm.gerenteMemoria.pcForFrames = 0;
 		vm.gerenteMemoria.indexForFrames++;
-		vm.cpu.setContext(0); //ultima modificacao
+		vm.cpu.setContext(0); 
 	}
-	System.out.print("CHECA PC: ");
-	System.out.println(pc);
-	
-	
+	printDebugChecaPC(pc);	
+}
+
+public void printDebugChecaPC(int pc) {
+	System.out.print("\n");
+	System.out.println("---- DEBUG CHECK PC ----");
+	System.out.print("-> PC interno da funcao: ");
+	System.out.println(pc);	
+	System.out.print("-> PC real da cpu: ");
+	System.out.println(vm.cpu.pc);
+	System.out.println("------------------------");
+	System.out.print("\n");
+}
+
+public void mudaPC(int frame, int offset) {
+	vm.gerenteMemoria.pcForFrames = offset;
+	vm.gerenteMemoria.indexForFrames = frame;
+	vm.cpu.setContext(0);
 }
 	
 public void chamaSistema() {
@@ -896,14 +1032,14 @@ public void chamaSistema() {
 		Sistema s = new Sistema();
 		// s.roda(progs.fibonacci10); // "progs" significa acesso/referencia ao programa
 		// em memoria secundaria
-		// s.roda(progs.progMinimo);
-		// s.roda(progs.fatorial);
+		//s.roda(progs.progMinimo);
+		//s.roda(progs.fatorial);
 		// s.roda(progs.NewInstructionTester);
-		// s.roda(progs.PA);
-		// s.roda(progs.PB);
-		 s.roda(progs.PC);
+		//s.roda(progs.PA);
+		//s.roda(progs.PB);
+		//s.roda(progs.PC);
 		//s.roda(progs.InterruptionTester);
-		//s.roda(progs.SystemCallTester);
+		s.roda(progs.SystemCallTester);
 		
 		//s.gerenteMemoria.aloca(150);
 		//s.gerenteMemoria.aloca(30);
@@ -1284,7 +1420,8 @@ public void chamaSistema() {
 				new Word(Opcode.STOP, -1, -1, -1) // 63
 		};
 
-		public Word[] SystemCallTester = new Word[] { new Word(Opcode.JMP, -1, -1, 9), // 0 // Inicia o prog. na pos. 9
+		public Word[] SystemCallTester = new Word[] { 
+				new Word(Opcode.JMP, -1, -1, 9), // 0 // Inicia o prog. na pos. 9
 																						// da mem.
 				// Area de dados
 				new Word(Opcode.DATA, -1, -1, -1), // 1 // Armazena input 1
