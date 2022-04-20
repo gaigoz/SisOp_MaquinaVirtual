@@ -138,7 +138,6 @@ public class Sistema {
 							pc++;
 							checaPC(pc);
 						} else {
-							System.out.println(reg[ir.r2]);
 
 							interrupt = Interrupt.ENDERECO_INVALIDO;
 						}
@@ -148,7 +147,6 @@ public class Sistema {
 						if (ir.p >= 0 && ir.p <= 1023) {
 							Word wordEfetivaTraduzida = vm.gerenteMemoria.traduzEndereco(ir.p, "AM");
 							wordEfetivaTraduzida.opc = Opcode.DATA;
-							System.out.print(wordEfetivaTraduzida);
 							wordEfetivaTraduzida.p = reg[ir.r1];
 							pc++;
 							checaPC(pc);
@@ -591,6 +589,9 @@ public class Sistema {
 			
 			int framesLivres = 0;
 			boolean podeAlocar;
+			
+			int frameTraduzido;
+			int pagTraduzida;
 						
 			public GerenteDeMemoria(int tamMem) { 
 					this.tamMem = tamMem;
@@ -641,7 +642,7 @@ public class Sistema {
 				
 				double localNroPalavras = nroPalavras;
 				
-				double nroPaginas = localNroPalavras/16;
+				double nroPaginas = localNroPalavras/tamPag;
 				
 				if(nroPaginas>Math.floor(nroPaginas)) {
 					// SE FOR UM VALOR QUEBRADO, ARREDONDA PARA CIMA
@@ -704,7 +705,7 @@ public class Sistema {
 			
 			public void printaTerminalAlocacao(int nroPalavras) {
 				double localNroPalavras = nroPalavras;
-				double nroPaginas = localNroPalavras/16;
+				double nroPaginas = localNroPalavras/tamPag;
 				
 				if(nroPaginas>Math.floor(nroPaginas)) {
 					// SE FOR UM VALOR QUEBRADO, ARREDONDA PARA CIMA
@@ -836,13 +837,16 @@ public class Sistema {
 				int tabelaNro = tabelaPaginas[p];
 				Word wordNaPosEfetiva = vm.gerenteMemoria.frames[tabelaNro].pagina[offset];
 				int effectiveAddress = (tabelaPaginas[p]*tamFrame) + offset;
+				
+				setFrameTraduzido(tabelaNro);
+				setPagTraduzida(offset);
 	
 				switch (opType) {	// DAM = "Doesn't Access Memory"
 									// AM = "Access Memory"
 									// JMP = Jump
 				
 					case "AM":
-						printDebugTraducao(logicAddress, p, offset, tabelaNro, wordNaPosEfetiva, effectiveAddress);
+						//printDebugTraducao(logicAddress, p, offset, tabelaNro, wordNaPosEfetiva, effectiveAddress);
 						return wordNaPosEfetiva;
 						
 					case "JMP":
@@ -855,6 +859,23 @@ public class Sistema {
 				
 				return wordNaPosEfetiva;
 			}
+			
+			public void setFrameTraduzido(int tabelaNro) {
+				frameTraduzido = tabelaNro;
+			}
+			
+			public int getFrameTraduzido() {
+				return frameTraduzido;	
+			}
+			
+			public void setPagTraduzida(int offset) {
+				pagTraduzida = offset;
+			}
+			
+			public int getPagTraduzida() {
+				return pagTraduzida;
+			}
+			
 			
 			public void printDebugTraducao(int logicAddress, int p, int offset, int tabelaNro, Word wordNaPosEfetiva, int effectiveAddress) {
 				System.out.print("\n");
@@ -907,7 +928,7 @@ public class Sistema {
 		System.out.println("---------------------------------- programa alocado ");
 		monitor.carga(programa, vm.m);
 		System.out.println("---------------------------------- programa carregado ");
-		monitor.dump(vm.m, 0, programa.length);
+		//monitor.dump(vm.m, 0, programa.length);
 		monitor.executa();
 		System.out.println("---------------------------------- apos execucao ");
 		//monitor.dump(vm.m, 0, programa.length);
@@ -973,12 +994,12 @@ public void checaPC(int pc) {
 	int tamPagina = vm.gerenteMemoria.tamPag;
 
 	if(pc>=tamPagina) {
-		System.out.print("entrei");
+		//System.out.print("entrei");
 		vm.gerenteMemoria.pcForFrames = 0;
 		vm.gerenteMemoria.indexForFrames++;
 		vm.cpu.setContext(0); 
 	}
-	printDebugChecaPC(pc);	
+	//printDebugChecaPC(pc);	
 }
 
 public void printDebugChecaPC(int pc) {
@@ -1002,17 +1023,24 @@ public void chamaSistema() {
 	
 	CPU cpuAccess = vm.cpu;
 	
+	vm.gerenteMemoria.traduzEndereco(cpuAccess.reg[9], "AM");
+	int frameTraduzido = vm.gerenteMemoria.getFrameTraduzido();
+	int pagTraduzida = vm.gerenteMemoria.getPagTraduzida();
+	
 	if (cpuAccess.reg[8] == 1) { // IN
 		int valorLido = leInteiro(); // Chama o metodo que le um inteiro do teclado
 		if (valorLido >= -10000 && valorLido <= 10000) { // Verifica se esta dentro do range valido
-			cpuAccess.m[cpuAccess.reg[9]].p = valorLido; // Coloca o valor lido no endereco de mem. armazenado no reg. 9
+			
+			vm.gerenteMemoria.frames[frameTraduzido].pagina[pagTraduzida].p = valorLido;
+			//cpuAccess.m[cpuAccess.reg[9]].p = valorLido; // Coloca o valor lido no endereco de mem. armazenado no reg. 9
 			cpuAccess.pc++;
 		} else {
 			interrupt = Interrupt.OVERFLOW; // Se estiver fora do range interrompe por overflow
 		}
 
 	} else if (cpuAccess.reg[8] == 2) { // OUT
-		int valorOut = cpuAccess.m[cpuAccess.reg[9]].p; // O endereco de mem. cujo valor deve-se escrever na tela esta
+		int valorOut = vm.gerenteMemoria.frames[frameTraduzido].pagina[pagTraduzida].p;
+		//int valorOut = cpuAccess.m[cpuAccess.reg[9]].p; // O endereco de mem. cujo valor deve-se escrever na tela esta
 									// armazenado no reg. 9
 		escreveIntTela(valorOut); // Chama o metodo que escreve um inteiro na tela
 		cpuAccess.pc++;
@@ -1037,9 +1065,9 @@ public void chamaSistema() {
 		// s.roda(progs.NewInstructionTester);
 		//s.roda(progs.PA);
 		//s.roda(progs.PB);
-		//s.roda(progs.PC);
+		s.roda(progs.PC);
 		//s.roda(progs.InterruptionTester);
-		s.roda(progs.SystemCallTester);
+		//s.roda(progs.SystemCallTester);
 		
 		//s.gerenteMemoria.aloca(150);
 		//s.gerenteMemoria.aloca(30);
