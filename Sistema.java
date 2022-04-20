@@ -62,7 +62,8 @@ public class Sistema {
 		}
 
 		public void setContext(int _pc) { // no futuro esta funcao vai ter que ser
-			pc = _pc; // limite e pc (deve ser zero nesta versao)
+			//pc = _pc; // limite e pc (deve ser zero nesta versao)
+			pc = vm.gerenteMemoria.pcForFrames;
 		}
 
 		private void dump(Word w) {
@@ -96,9 +97,17 @@ public class Sistema {
 			interrupt = Interrupt.NULL;
 
 			while (interrupt == Interrupt.NULL) { // ciclo de instrucoes. acaba cfe instrucao, veja cada caso.
-
-				ir = m[pc]; // FETCH - busca posicao da memoria apontada por pc, guarda em ir
-
+				int tamTabela = vm.gerenteMemoria.tamTabelaPaginas;
+				int indiceFrameAtual = 0;
+				int frameDaTabela = vm.gerenteMemoria.tabelaPaginas[indiceFrameAtual];	
+				
+				Frame[] frames = vm.gerenteMemoria.frames;
+				
+				System.out.print("pc: ");
+				System.out.println(pc);
+				//ir = m[pc]; // FETCH - busca posicao da memoria apontada por pc, guarda em ir
+				ir = frames[frameDaTabela].pagina[pc]; // aponta para a primeira pos do primeiro frame, segundo a tabela de frames
+				
 				// if debug
 				showState();
 				// EXECUTA INSTRUCAO NO ir
@@ -107,12 +116,15 @@ public class Sistema {
 					case LDI: // Rd <- k
 						reg[ir.r1] = ir.p;
 						pc++;
+						checaPC(pc);
+						
 						break;
 
 					case LDD: // Rd <- [A]
 						if (ir.p >= 0 && ir.p <= 1023) {
-							reg[ir.r1] = m[ir.p].p;
+							reg[ir.r1] = vm.gerenteMemoria.traduzEndereco(ir.p).p;
 							pc++;
+							checaPC(pc);
 						} else {
 							interrupt = Interrupt.ENDERECO_INVALIDO;
 						}
@@ -120,8 +132,9 @@ public class Sistema {
 
 					case LDX: // RD <- [RS] // NOVA
 						if (reg[ir.r2] >= 0 && reg[ir.r2] <= 1023) {
-							reg[ir.r1] = m[reg[ir.r2]].p;
+							reg[ir.r1] = vm.gerenteMemoria.traduzEndereco(reg[ir.r2]).p;
 							pc++;
+							checaPC(pc);
 						} else {
 							interrupt = Interrupt.ENDERECO_INVALIDO;
 						}
@@ -129,9 +142,11 @@ public class Sistema {
 
 					case STD: // [A] <- Rs
 						if (ir.p >= 0 && ir.p <= 1023) {
-							m[ir.p].opc = Opcode.DATA;
-							m[ir.p].p = reg[ir.r1];
+							vm.gerenteMemoria.traduzEndereco(ir.p).opc = Opcode.DATA;
+							System.out.print(vm.gerenteMemoria.traduzEndereco(ir.p));
+							vm.gerenteMemoria.traduzEndereco(ir.p).p = reg[ir.r1];
 							pc++;
+							checaPC(pc);
 						} else {
 							interrupt = Interrupt.ENDERECO_INVALIDO;
 						}
@@ -139,9 +154,10 @@ public class Sistema {
 
 					case STX: // [Rd] <- Rs
 						if (reg[ir.r1] >= 0 && reg[ir.r1] <= 1023) {
-							m[reg[ir.r1]].opc = Opcode.DATA;
-							m[reg[ir.r1]].p = reg[ir.r2];
+							vm.gerenteMemoria.traduzEndereco(reg[ir.r1]).opc = Opcode.DATA;
+							vm.gerenteMemoria.traduzEndereco(reg[ir.r1]).p = reg[ir.r2];
 							pc++;
+							checaPC(pc);
 						} else {
 							interrupt = Interrupt.ENDERECO_INVALIDO;
 						}
@@ -156,6 +172,7 @@ public class Sistema {
 						reg[ir.r1] = reg[ir.r1] + ir.p;
 						if (reg[ir.r1] >= -10000 && reg[ir.r1] <= 10000) {
 							pc++;
+							checaPC(pc);
 						} else {
 							interrupt = Interrupt.OVERFLOW;
 						}
@@ -165,6 +182,7 @@ public class Sistema {
 						reg[ir.r1] = reg[ir.r1] - ir.p;
 						if (reg[ir.r1] >= -10000 && reg[ir.r1] <= 10000) {
 							pc++;
+							checaPC(pc);
 						} else {
 							interrupt = Interrupt.OVERFLOW;
 						}
@@ -174,6 +192,7 @@ public class Sistema {
 						reg[ir.r1] = reg[ir.r1] + reg[ir.r2];
 						if (reg[ir.r1] >= -10000 && reg[ir.r1] <= 10000) {
 							pc++;
+							checaPC(pc);
 						} else {
 							interrupt = Interrupt.OVERFLOW;
 						}
@@ -183,6 +202,7 @@ public class Sistema {
 						reg[ir.r1] = reg[ir.r1] - reg[ir.r2];
 						if (reg[ir.r1] >= -10000 && reg[ir.r1] <= 10000) {
 							pc++;
+							checaPC(pc);
 						} else {
 							interrupt = Interrupt.OVERFLOW;
 						}
@@ -192,6 +212,7 @@ public class Sistema {
 						reg[ir.r1] = reg[ir.r1] * reg[ir.r2]; // gera um overflow // --> LIGA INT (1)
 						if (reg[ir.r1] >= -10000 && reg[ir.r1] <= 10000) {
 							pc++;
+							checaPC(pc);
 						} else {
 							interrupt = Interrupt.OVERFLOW;
 						}
@@ -214,6 +235,7 @@ public class Sistema {
 								pc = ir.p;
 							} else {
 								pc++;
+								checaPC(pc);
 							}
 							break;
 						} else {
@@ -227,6 +249,7 @@ public class Sistema {
 								pc = ir.p;
 							} else {
 								pc++;
+								checaPC(pc);
 							}
 							break;
 						} else {
@@ -240,6 +263,7 @@ public class Sistema {
 								pc = ir.p;
 							} else {
 								pc++;
+								checaPC(pc);
 							}
 							break;
 						} else {
@@ -261,6 +285,7 @@ public class Sistema {
 								pc = reg[ir.r1];
 							} else {
 								pc++;
+								checaPC(pc);
 							}
 							break;
 						} else {
@@ -274,6 +299,7 @@ public class Sistema {
 								pc = reg[ir.r1];
 							} else {
 								pc++;
+								checaPC(pc);
 							}
 							break;
 						} else {
@@ -287,6 +313,7 @@ public class Sistema {
 								pc = reg[ir.r1];
 							} else {
 								pc++;
+								checaPC(pc);
 							}
 							break;
 						} else {
@@ -307,6 +334,7 @@ public class Sistema {
 								pc = m[ir.p].p;
 							} else {
 								pc++;
+								checaPC(pc);
 							}
 							break;
 						} else {
@@ -320,6 +348,7 @@ public class Sistema {
 								pc = m[ir.p].p;
 							} else {
 								pc++;
+								checaPC(pc);
 							}
 							break;
 						} else {
@@ -333,6 +362,7 @@ public class Sistema {
 								pc = m[ir.p].p;
 							} else {
 								pc++;
+								checaPC(pc);
 							}
 							break;
 						} else {
@@ -346,6 +376,7 @@ public class Sistema {
 								pc = ir.p;
 							} else {
 								pc++;
+								checaPC(pc);
 							}
 							break;
 						} else {
@@ -356,6 +387,7 @@ public class Sistema {
 					case MOVE: // RD <- RS
 						reg[ir.r1] = reg[ir.r2];
 						pc++;
+						checaPC(pc);
 						break;
 
 					case STOP:
@@ -394,6 +426,7 @@ public class Sistema {
 		public int tamMem;
 		public Word[] m;
 		public CPU cpu;
+		public GerenteDeMemoria gerenteMemoria;
 
 		public VM() {
 			// memoria
@@ -402,9 +435,12 @@ public class Sistema {
 			for (int i = 0; i < tamMem; i++) {
 				m[i] = new Word(Opcode.___, -1, -1, -1);
 			}
-			;
+	
 			// cpu
 			cpu = new CPU(m); // cpu acessa memoria
+			
+			// gerente de memoria
+			gerenteMemoria = new GerenteDeMemoria(tamMem);
 		}
 	}
 
@@ -454,6 +490,33 @@ public class Sistema {
 				m[i].r2 = p[i].r2;
 				m[i].p = p[i].p;
 			}
+						
+			int tamPagina = vm.gerenteMemoria.tamPag;
+			int tamTabelaPaginas = vm.gerenteMemoria.tamTabelaPaginas;
+			int incrementaIndexcomTamanhoPag = 0;
+			
+			for (int x=0; x<tamTabelaPaginas; x++) {
+				int cont = 0;
+				int j=0;
+			for (int i = incrementaIndexcomTamanhoPag; i<p.length; i++) {
+				int frameLidoDaTabela = vm.gerenteMemoria.tabelaPaginas[x];		
+				if (cont<tamPagina) {				
+					vm.gerenteMemoria.frames[frameLidoDaTabela].pagina[j].opc = p[i].opc;
+					vm.gerenteMemoria.frames[frameLidoDaTabela].pagina[j].r1 = p[i].r1;
+					vm.gerenteMemoria.frames[frameLidoDaTabela].pagina[j].r2 = p[i].r2;
+					vm.gerenteMemoria.frames[frameLidoDaTabela].pagina[j].p = p[i].p;
+					cont++;
+					j++;
+				} else {
+					// trocar o frame
+					incrementaIndexcomTamanhoPag+=tamPagina;
+					break;
+				}
+			}
+				
+			}
+			vm.gerenteMemoria.printaFrames();
+			
 		}
 
 		public void executa() {
@@ -465,29 +528,78 @@ public class Sistema {
 
 	}
 	
+	public class Frame {
+		Word[] pagina;
+		
+		public Frame(int tamPag) {
+			pagina = new Word[tamPag];
+			for (int x = 0; x < tamPag; x++) {
+				pagina[x] = new Word(Opcode.___, -1, -1, -1);
+			}
+		}
+	}
+	
 	public class GerenteDeMemoria {				
-			int tamMem = vm.tamMem;			
+			int tamMem;			
 			int tamPag = 16;
 			int tamFrame = tamPag;
-			int nroFrames = tamMem/tamPag;
+			int nroFrames = (tamMem/tamPag);
 			
-			Word[] mem = new Word[tamMem];
-			boolean[] frames = new boolean[nroFrames]; // if TRUE=ocupado, if FALSE=livre
-			int[] tabelaPaginas = new int[nroFrames];
+			int pcForFrames = 0;
+			int indexForFrames = 0;
+			
+			Word[] pagina;
+						
+			Frame[] frames;
+			
+			boolean[] framesBool; // if TRUE=ocupado, if FALSE=livre
+			
+			int[] tabelaPaginas;
 			int tamTabelaPaginas = 0;
 			
-			public GerenteDeMemoria() { 
-					for (int x = 0; x < tamMem; x++) {
-						mem[x] = new Word(Opcode.___, -1, -1, -1);
+			public GerenteDeMemoria(int tamMem) { 
+					this.tamMem = tamMem;
+					pagina = new Word[tamPag];
+					nroFrames = (tamMem/tamPag);
+					frames = new Frame[nroFrames];
+					framesBool = new boolean[nroFrames];
+					tabelaPaginas = new int[nroFrames];
+					
+					for (int x = 0; x < tamPag; x++) {
+						pagina[x] = new Word(Opcode.___, -1, -1, -1);
+					}
+					
+					for (int x = 0; x < nroFrames; x++) {
+						frames[x] = new Frame(tamPag);
 					}
 				
 					for (int i = 0; i < nroFrames; i++) {
-						frames[i] = false;
+						framesBool[i] = false;
 					}	
 					
 					for (int i = 0; i < nroFrames; i++) {
 						tabelaPaginas[i] = 0;
 					}
+					
+					framesNaoContinuosParaTeste();
+			}
+			
+			public void framesNaoContinuosParaTeste() {
+				for (int i = 0; i < 10; i++) {
+					framesBool[i] = true;
+				}
+				
+				framesBool[12] = true;
+				framesBool[14] = true;
+				framesBool[17] = true;
+				framesBool[21] = true;
+				
+				for (int i = 26; i < 30; i++) {
+					framesBool[i] = true;
+				}
+				for (int i = 40; i < 55; i++) {
+					framesBool[i] = true;
+				}
 			}
 			
 			public int[] aloca(int nroPalavras) {
@@ -525,12 +637,12 @@ public class Sistema {
 						System.out.print("i=");
 						System.out.println(i);
 						
-						if(frames[i] == true) { // se ocupado avanca no vetor
+						if(framesBool[i] == true) { // se ocupado avanca no vetor
 							System.out.println("frame ocupado");
 							nroFrames++;
 						} else {
 							System.out.println("frame livre");
-							frames[i]=true;	// se livre, ocupa e adiciona na tabela de paginas
+							framesBool[i]=true;	// se livre, ocupa e adiciona na tabela de paginas
 							System.out.print("OCUPANDO O FRAME ");
 							System.out.println(i);
 							
@@ -551,11 +663,17 @@ public class Sistema {
 				
 			}
 			
+			public void desaloca() {
+				for (int i = 0; i < nroFrames; i++) {
+					framesBool[i] = false;
+				}
+			}
+			
 			public int contaFramesLivres() {
 				System.out.println("conta frames livres");
 				int contaFramesLivres = 0;
 				for (int i = 0; i < nroFrames; i++) {
-					if(frames[i] == false) {
+					if(framesBool[i] == false) {
 						contaFramesLivres++;
 					}	
 				}
@@ -579,25 +697,68 @@ public class Sistema {
 				}	
 			}
 			
-			public void printaFrame() {
+			public void printaFrameBool() {
 				for(int i=0; i<nroFrames ; i++) {
 					System.out.print("[");
 					System.out.print(i);
 					System.out.print("] :");
-					System.out.println(frames[i]);
+					System.out.println(framesBool[i]);
+				}
+			}
+ 			
+			public void printaFrames() {
+				for(int i=0; i<frames.length; i++) {
+					System.out.print("FRAME[");
+					System.out.print(i);
+					System.out.println("] --------------------------------");
+					for(int j=0; j<tamPag; j++) {
+						System.out.print("   ");
+						System.out.print(vm.gerenteMemoria.frames[i].pagina[j].opc); 
+						System.out.print("  ");
+						System.out.print(vm.gerenteMemoria.frames[i].pagina[j].r1); 
+						System.out.print(" ");
+						System.out.print(vm.gerenteMemoria.frames[i].pagina[j].r2); 
+						System.out.print(" ");
+						System.out.println(vm.gerenteMemoria.frames[i].pagina[j].p);
+					}
+					System.out.println("------------------------------------------");
 				}
 			}
 			
 			public void printaTabelaPaginas(int n) {
 				System.out.println("TABELA DE PAGINAS:");
 				for(int i=0; i<n ; i++) {
+					System.out.print("pg ");
 					System.out.print("[");
 					System.out.print(i);
-					System.out.print("] :");
+					System.out.print("] : ");
 					System.out.println(tabelaPaginas[i]);
 				}
 			}
 			
+			public Word traduzEndereco(int logicAddress) {
+				int p = logicAddress/tamPag;
+				int offset = logicAddress%tamPag;
+				
+				Word conteudo = vm.gerenteMemoria.frames[p].pagina[offset];
+				
+				int effectiveAddress = (tabelaPaginas[p]*tamFrame) + offset;
+				
+				System.out.print("TRADUZ A: ");
+				System.out.println(logicAddress);
+				System.out.print("PARA EFFECTIVE: ");
+				System.out.println(effectiveAddress);
+				System.out.print("CONTEUDO: ");
+				System.out.print(conteudo.opc);
+				System.out.print(" ");
+				System.out.print(conteudo.r1);
+				System.out.print(" ");
+				System.out.print(conteudo.r2);
+				System.out.print(" ");
+				System.out.println(conteudo.p);
+				
+				return conteudo;
+			}
 			
 			
 	}
@@ -609,17 +770,20 @@ public class Sistema {
 
 	public VM vm;
 	public Monitor monitor;
-	public GerenteDeMemoria gerenteMemoria;
+	
 	public static Programas progs;
 
 	public Sistema() { // a VM com tratamento de interrupcoes
 		vm = new VM();
 		monitor = new Monitor();
-		gerenteMemoria = new GerenteDeMemoria();
+		
 		progs = new Programas();
 	}
 
 	public void roda(Word[] programa) {
+		vm.gerenteMemoria.aloca(programa.length);
+
+		System.out.println("---------------------------------- programa alocado ");
 		monitor.carga(programa, vm.m);
 		System.out.println("---------------------------------- programa carregado ");
 		monitor.dump(vm.m, 0, programa.length);
@@ -683,6 +847,21 @@ public class Sistema {
 		}
 	}
 	
+public void checaPC(int pc) {
+	int tamPagina = vm.gerenteMemoria.tamPag;
+
+	if(pc>=(tamPagina)) {
+		System.out.println("entrei");
+		vm.gerenteMemoria.pcForFrames = 0;
+		vm.gerenteMemoria.indexForFrames++;
+		vm.cpu.setContext(0); //ultima modificacao
+	}
+	System.out.print("CHECA PC: ");
+	System.out.println(pc);
+	
+	
+}
+	
 public void chamaSistema() {
 	
 	CPU cpuAccess = vm.cpu;
@@ -722,13 +901,13 @@ public void chamaSistema() {
 		// s.roda(progs.NewInstructionTester);
 		// s.roda(progs.PA);
 		// s.roda(progs.PB);
-		// s.roda(progs.PC);
+		 s.roda(progs.PC);
 		//s.roda(progs.InterruptionTester);
 		//s.roda(progs.SystemCallTester);
 		
-		s.gerenteMemoria.aloca(150);
-		s.gerenteMemoria.aloca(30);
-		s.gerenteMemoria.aloca(10);
+		//s.gerenteMemoria.aloca(150);
+		//s.gerenteMemoria.aloca(30);
+		//s.gerenteMemoria.aloca(10);
 		
 		
 
