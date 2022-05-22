@@ -722,24 +722,6 @@ public class Sistema {
 			}
 			
 			public void desaloca(int[] tabelaPaginas, int tamTabelaPaginas) {
-				int frameInicial = tabelaPaginas[0];
-				System.out.print("------> Frame inicial p desalocar: ");
-				System.out.println(frameInicial);
-				
-				System.out.print("------> TAM TABELA: ");
-				System.out.println(tamTabelaPaginas);
-				
-				int frameFinal = tabelaPaginas[tamTabelaPaginas-1];
-				System.out.print("------> Frame final p desalocar: ");
-				System.out.println(frameFinal);
-				
-				System.out.print("------> TamPag p desalocar: ");
-				System.out.println(tamPag);
-				
-				/*for (int i = frameInicial; i < frameFinal; i++) {
-				
-					framesBool[i] = false;
-				}*/
 				
 				for (int i = 0; i < tamTabelaPaginas; i++) {
 					
