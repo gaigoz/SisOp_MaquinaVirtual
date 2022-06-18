@@ -976,6 +976,32 @@ public class Sistema {
 		int tamPag;
 		
 	}
+
+	// Escalonador
+
+	public class Escalonador {
+		public ArrayList<PCB> filaDeProntos;
+		public PCB processoAtual;
+		public CPU cpu;
+	
+	public Escalonador(ArrayList<PCB> filaDeProntos, CPU cpu){
+		this.filaDeProntos = filaDeProntos;
+		this.cpu = cpu;
+	}
+
+	public PCB getProcessoAtual() {
+        return processoAtual;
+    }
+	
+	public void setProcessoAtual(PCB processoAtual) {
+        this.processoAtual = processoAtual;
+    }
+
+	public List<PCB> getFilaDeProntos() {
+        return filaDeProntos;
+    }
+
+	}
 	
 	// Gerente de Processos
 	public class GerenteDeProcessos {
@@ -1005,7 +1031,7 @@ public class Sistema {
 			// verifica tamanho
 			tamProcesso = getTamProcesso(programa);
 			
-			// pede alocação de mem ao GM
+			// pede alocaï¿½ï¿½o de mem ao GM
 				// se nao tem mem retorna false
 			pcb.tabelaPaginas = vm.gerenteMemoria.aloca(tamProcesso);
 			pcb.tamTabelaPaginas = vm.gerenteMemoria.tamTabelaPaginas;
