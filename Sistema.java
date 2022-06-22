@@ -61,8 +61,21 @@ public class Sistema {
 			reg = new int[10]; // aloca o espaco dos registradores
 		}
 
-		public void setContext(int _pc) { // no futuro esta funcao vai ter que ser
-			pc = _pc; // limite e pc (deve ser zero nesta versao)
+		public void setContext(int idPrograma, boolean escalonador) { // no futuro esta funcao vai ter que ser
+			//pc = _pc; // limite e pc (deve ser zero nesta versao)
+			
+			PCB pcbPrograma = vm.gerenteProcessos.getPCBForID(idPrograma);
+			
+			if (escalonador == true) {
+				pc = pcbPrograma.pcEscalonador;
+				
+				for(int i=0; i<pcbPrograma.regEscalonador.length;i++) {
+					reg[i]=pcbPrograma.regEscalonador[i];
+				}
+			} else {
+				//pc = vm.gerenteMemoria.pcForFrames;
+				pc = pcbPrograma.pcRuntime;
+			}
 		}
 
 		private void dump(Word w) {
@@ -89,30 +102,70 @@ public class Sistema {
 			System.out.print("           ");
 			dump(ir);
 		}
+		
+		private void printInterfaceExecucaoGP() {
+			System.out.print("\n");
+			System.out.print("\n");
+			System.out.println("============== INICIANDO EXECUCAO DO PROCESSO ==============");
+			System.out.println("||");
+			
+			System.out.println("||");
+			System.out.println("||   ########## EXECUTANDO PROGRAMA ##########");
+			System.out.println("||");
+		}
 
-		public void run() { // execucao da CPU supoe que o contexto da CPU, vide acima, esta devidamente
+		public void run(int idPrograma, boolean escalonador) { // execucao da CPU supoe que o contexto da CPU, vide acima, esta devidamente
 							// setado
 
 			interrupt = Interrupt.NULL;
+			
+			PCB pcbDesejado = vm.gerenteProcessos.getPCBForID(idPrograma);
+			
+			printInterfaceExecucaoGP();
+			
+			vm.gerenteProcessos.filaProcessosProntos.remove(pcbDesejado);
+			vm.gerenteProcessos.filaProcessosRodando.add(pcbDesejado);
+			vm.gerenteProcessos.printaTodasListas();
 
 			while (interrupt == Interrupt.NULL) { // ciclo de instrucoes. acaba cfe instrucao, veja cada caso.
-
-				ir = m[pc]; // FETCH - busca posicao da memoria apontada por pc, guarda em ir
-
+				//int indiceFrameAtual = vm.gerenteMemoria.indexForFrames;
+				//int frameDaTabela = vm.gerenteMemoria.tabelaPaginas[indiceFrameAtual];
+				
+				int indiceFramePCB = pcbDesejado.frameIndex;
+				int frameDoPCB = pcbDesejado.tabelaPaginas[indiceFramePCB];
+				
+				//vm.gerenteProcessos.printaTabelaPaginas(idPrograma);
+				
+				Frame[] frames = vm.gerenteMemoria.frames;
+				
+				// printDebugRuntime(indiceFrameAtual, frameDaTabela);
+				//printDebugRuntime(indiceFramePCB, frameDoPCB);
+				//printDebugEscalonador(pcbDesejado);
+				
+				//ir = m[pc]; // FETCH - busca posicao da memoria apontada por pc, guarda em ir
+				//ir = frames[frameDaTabela].pagina[pc]; // aponta para a primeira pos do primeiro frame, segundo a tabela de frames
+				ir = frames[frameDoPCB].pagina[pc]; // aponta para a primeira pos do primeiro frame, segundo a tabela de frames
+				
+				
 				// if debug
-				showState();
+				//showState();
 				// EXECUTA INSTRUCAO NO ir
 				switch (ir.opc) { // para cada opcode, sua execucao
 					// Instrucoes de Memoria
 					case LDI: // Rd <- k
 						reg[ir.r1] = ir.p;
 						pc++;
+						checaPC(pc, pcbDesejado);
+						
 						break;
 
 					case LDD: // Rd <- [A]
+						
 						if (ir.p >= 0 && ir.p <= 1023) {
-							reg[ir.r1] = m[ir.p].p;
+							Word wordEfetivaTraduzida = vm.gerenteMemoria.traduzEndereco(ir.p, "AM", pcbDesejado);
+							reg[ir.r1] = wordEfetivaTraduzida.p;
 							pc++;
+							checaPC(pc, pcbDesejado);
 						} else {
 							interrupt = Interrupt.ENDERECO_INVALIDO;
 						}
@@ -120,18 +173,23 @@ public class Sistema {
 
 					case LDX: // RD <- [RS] // NOVA
 						if (reg[ir.r2] >= 0 && reg[ir.r2] <= 1023) {
-							reg[ir.r1] = m[reg[ir.r2]].p;
+							Word wordEfetivaTraduzida = vm.gerenteMemoria.traduzEndereco(reg[ir.r2], "AM", pcbDesejado);
+							reg[ir.r1] = wordEfetivaTraduzida.p;
 							pc++;
+							checaPC(pc, pcbDesejado);
 						} else {
+
 							interrupt = Interrupt.ENDERECO_INVALIDO;
 						}
 						break;
 
 					case STD: // [A] <- Rs
 						if (ir.p >= 0 && ir.p <= 1023) {
-							m[ir.p].opc = Opcode.DATA;
-							m[ir.p].p = reg[ir.r1];
+							Word wordEfetivaTraduzida = vm.gerenteMemoria.traduzEndereco(ir.p, "AM", pcbDesejado);
+							wordEfetivaTraduzida.opc = Opcode.DATA;
+							wordEfetivaTraduzida.p = reg[ir.r1];
 							pc++;
+							checaPC(pc, pcbDesejado);
 						} else {
 							interrupt = Interrupt.ENDERECO_INVALIDO;
 						}
@@ -139,9 +197,11 @@ public class Sistema {
 
 					case STX: // [Rd] <- Rs
 						if (reg[ir.r1] >= 0 && reg[ir.r1] <= 1023) {
-							m[reg[ir.r1]].opc = Opcode.DATA;
-							m[reg[ir.r1]].p = reg[ir.r2];
+							Word wordEfetivaTraduzida = vm.gerenteMemoria.traduzEndereco(reg[ir.r1], "AM", pcbDesejado);
+							wordEfetivaTraduzida.opc = Opcode.DATA;
+							wordEfetivaTraduzida.p = reg[ir.r2];
 							pc++;
+							checaPC(pc, pcbDesejado);
 						} else {
 							interrupt = Interrupt.ENDERECO_INVALIDO;
 						}
@@ -156,6 +216,7 @@ public class Sistema {
 						reg[ir.r1] = reg[ir.r1] + ir.p;
 						if (reg[ir.r1] >= -10000 && reg[ir.r1] <= 10000) {
 							pc++;
+							checaPC(pc, pcbDesejado);
 						} else {
 							interrupt = Interrupt.OVERFLOW;
 						}
@@ -165,6 +226,7 @@ public class Sistema {
 						reg[ir.r1] = reg[ir.r1] - ir.p;
 						if (reg[ir.r1] >= -10000 && reg[ir.r1] <= 10000) {
 							pc++;
+							checaPC(pc, pcbDesejado);
 						} else {
 							interrupt = Interrupt.OVERFLOW;
 						}
@@ -174,6 +236,7 @@ public class Sistema {
 						reg[ir.r1] = reg[ir.r1] + reg[ir.r2];
 						if (reg[ir.r1] >= -10000 && reg[ir.r1] <= 10000) {
 							pc++;
+							checaPC(pc, pcbDesejado);
 						} else {
 							interrupt = Interrupt.OVERFLOW;
 						}
@@ -183,6 +246,7 @@ public class Sistema {
 						reg[ir.r1] = reg[ir.r1] - reg[ir.r2];
 						if (reg[ir.r1] >= -10000 && reg[ir.r1] <= 10000) {
 							pc++;
+							checaPC(pc, pcbDesejado);
 						} else {
 							interrupt = Interrupt.OVERFLOW;
 						}
@@ -192,6 +256,7 @@ public class Sistema {
 						reg[ir.r1] = reg[ir.r1] * reg[ir.r2]; // gera um overflow // --> LIGA INT (1)
 						if (reg[ir.r1] >= -10000 && reg[ir.r1] <= 10000) {
 							pc++;
+							checaPC(pc, pcbDesejado);
 						} else {
 							interrupt = Interrupt.OVERFLOW;
 						}
@@ -202,7 +267,8 @@ public class Sistema {
 					// Instrucoes JUMP
 					case JMP: // PC <- k
 						if (ir.p >= 0 && ir.p <= 1023) {
-							pc = ir.p;
+							vm.gerenteMemoria.traduzEndereco(ir.p, "JMP", pcbDesejado);
+							//pc = ir.p;
 						} else {
 							interrupt = Interrupt.ENDERECO_INVALIDO;
 						}
@@ -211,9 +277,11 @@ public class Sistema {
 					case JMPIGK: // If RC > 0 then PC <- k else PC++
 						if (ir.p >= 0 && ir.p <= 1023) {
 							if (reg[ir.r2] > 0) {
-								pc = ir.p;
+								vm.gerenteMemoria.traduzEndereco(ir.p, "JMP", pcbDesejado);
+								//pc = ir.p;
 							} else {
 								pc++;
+								checaPC(pc, pcbDesejado);
 							}
 							break;
 						} else {
@@ -224,9 +292,11 @@ public class Sistema {
 					case JMPILK: // If RC < 0 then PC <- k else PC++
 						if (ir.p >= 0 && ir.p <= 1023) {
 							if (reg[ir.r2] < 0) {
-								pc = ir.p;
+								vm.gerenteMemoria.traduzEndereco(ir.p, "JMP", pcbDesejado);
+								//pc = ir.p;
 							} else {
 								pc++;
+								checaPC(pc, pcbDesejado);
 							}
 							break;
 						} else {
@@ -237,9 +307,11 @@ public class Sistema {
 					case JMPIEK: // If RC = 0 then PC <- k else PC++
 						if (ir.p >= 0 && ir.p <= 1023) {
 							if (reg[ir.r2] == 0) {
-								pc = ir.p;
+								vm.gerenteMemoria.traduzEndereco(ir.p, "JMP", pcbDesejado);
+								//pc = ir.p;
 							} else {
 								pc++;
+								checaPC(pc, pcbDesejado);
 							}
 							break;
 						} else {
@@ -249,7 +321,8 @@ public class Sistema {
 
 					case JMPI: // PC <- Rs
 						if (reg[ir.r1] >= 0 && reg[ir.r1] <= 1023) {
-							pc = reg[ir.r1];
+							vm.gerenteMemoria.traduzEndereco(reg[ir.r1], "JMP", pcbDesejado);
+							//pc = reg[ir.r1];
 						} else {
 							interrupt = Interrupt.ENDERECO_INVALIDO;
 						}
@@ -258,9 +331,11 @@ public class Sistema {
 					case JMPIG: // If RC > 0 then PC<-RS else PC++
 						if (reg[ir.r1] >= 0 && reg[ir.r1] <= 1023) {
 							if (reg[ir.r2] > 0) {
-								pc = reg[ir.r1];
+								vm.gerenteMemoria.traduzEndereco(reg[ir.r1], "JMP", pcbDesejado);
+								//pc = reg[ir.r1];
 							} else {
 								pc++;
+								checaPC(pc, pcbDesejado);
 							}
 							break;
 						} else {
@@ -271,9 +346,11 @@ public class Sistema {
 					case JMPIL: // if Rc < 0 then PC <- Rs Else PC <- PC +1
 						if (reg[ir.r1] >= 0 && reg[ir.r1] <= 1023) {
 							if (reg[ir.r2] < 0) {
-								pc = reg[ir.r1];
+								vm.gerenteMemoria.traduzEndereco(reg[ir.r1], "JMP", pcbDesejado);
+								//pc = reg[ir.r1];
 							} else {
 								pc++;
+								checaPC(pc, pcbDesejado);
 							}
 							break;
 						} else {
@@ -284,9 +361,11 @@ public class Sistema {
 					case JMPIE: // If Rc = 0 Then PC <- Rs Else PC <- PC +1
 						if (reg[ir.r1] >= 0 && reg[ir.r1] <= 1023) {
 							if (reg[ir.r2] == 0) {
-								pc = reg[ir.r1];
+								vm.gerenteMemoria.traduzEndereco(reg[ir.r1], "JMP", pcbDesejado);
+								//pc = reg[ir.r1];
 							} else {
 								pc++;
+								checaPC(pc, pcbDesejado);
 							}
 							break;
 						} else {
@@ -296,7 +375,9 @@ public class Sistema {
 
 					case JMPIM: // PC <- [A]
 						if (ir.p >= 0 && ir.p <= 1023) {
-							pc = m[ir.p].p;
+							Word wordEfetivaTraduzida = vm.gerenteMemoria.traduzEndereco(ir.p, "AM", pcbDesejado);
+							vm.gerenteMemoria.traduzEndereco(wordEfetivaTraduzida.p, "JMP", pcbDesejado);
+							//pc = wordEfetivaTraduzida.p;
 						} else {
 							interrupt = Interrupt.ENDERECO_INVALIDO;
 						}
@@ -304,9 +385,12 @@ public class Sistema {
 					case JMPIGM: // If RC > 0 then PC <- [A] else PC++
 						if (ir.p >= 0 && ir.p <= 1023) {
 							if (reg[ir.r2] > 0) {
-								pc = m[ir.p].p;
+								Word wordEfetivaTraduzida = vm.gerenteMemoria.traduzEndereco(ir.p, "AM", pcbDesejado);
+								vm.gerenteMemoria.traduzEndereco(wordEfetivaTraduzida.p, "JMP", pcbDesejado);
+								//pc = m[ir.p].p;
 							} else {
 								pc++;
+								checaPC(pc, pcbDesejado);
 							}
 							break;
 						} else {
@@ -317,9 +401,12 @@ public class Sistema {
 					case JMPILM: // If RC < 0 then PC <- k else PC++
 						if (ir.p >= 0 && ir.p <= 1023) {
 							if (reg[ir.r2] < 0) {
-								pc = m[ir.p].p;
+								Word wordEfetivaTraduzida = vm.gerenteMemoria.traduzEndereco(ir.p, "AM", pcbDesejado);
+								vm.gerenteMemoria.traduzEndereco(wordEfetivaTraduzida.p, "JMP", pcbDesejado);
+								//pc = m[ir.p].p;
 							} else {
 								pc++;
+								checaPC(pc, pcbDesejado);
 							}
 							break;
 						} else {
@@ -330,9 +417,12 @@ public class Sistema {
 					case JMPIEM: // If RC = 0 then PC <- k else PC++
 						if (ir.p >= 0 && ir.p <= 1023) {
 							if (reg[ir.r2] == 0) {
-								pc = m[ir.p].p;
+								Word wordEfetivaTraduzida = vm.gerenteMemoria.traduzEndereco(ir.p, "AM", pcbDesejado);
+								vm.gerenteMemoria.traduzEndereco(wordEfetivaTraduzida.p, "JMP", pcbDesejado);
+								//pc = m[ir.p].p;
 							} else {
 								pc++;
+								checaPC(pc, pcbDesejado);
 							}
 							break;
 						} else {
@@ -343,9 +433,11 @@ public class Sistema {
 					case JMPIGT: // If RS>RC then PC <- k else PC++
 						if (ir.p >= 0 && ir.p <= 1023) {
 							if (reg[ir.r1] > reg[ir.r2]) {
-								pc = ir.p;
+								vm.gerenteMemoria.traduzEndereco(ir.p, "JMP", pcbDesejado);
+								//pc = ir.p;
 							} else {
 								pc++;
+								checaPC(pc, pcbDesejado);
 							}
 							break;
 						} else {
@@ -356,6 +448,7 @@ public class Sistema {
 					case MOVE: // RD <- RS
 						reg[ir.r1] = reg[ir.r2];
 						pc++;
+						checaPC(pc, pcbDesejado);
 						break;
 
 					case STOP:
@@ -376,10 +469,55 @@ public class Sistema {
 						interrupt = Interrupt.INSTRUCAO_INVALIDA;
 						break;
 				}
+				
+				pcbDesejado.pcEscalonador = pc;
+				
+				vm.escalonador.contInst++; // incrementa a contagem de instrucoes para o contador do escalonador
+				int contEscalonador = vm.escalonador.contInst;
+				int nroMaxCiclosEscalonador = vm.escalonador.nroMaxCiclosCPU;
+				if ((vm.chaveamentoParaEscalonador == true) && (contEscalonador > nroMaxCiclosEscalonador)) {
+					interrupt = Interrupt.TIME_OUT;
+				}
 
 				// VERIFICA INTERRUPCAO !!! - TERCEIRA FASE DO CICLO DE INSTRUCOES
-				trataInterrupcao(interrupt);
+				trataInterrupcao(interrupt, idPrograma, escalonador);
 			}
+		}
+		
+		public void printDebugRuntime(int indiceFramePCB, int frameDaTabela){
+			System.out.println("\n");
+			System.out.println("---- DEBUG PAGINACAO EM RUNTIME ----");
+			System.out.print("-> Frame atual: ");
+			System.out.println(frameDaTabela);
+			System.out.println("------------------------------------");
+			System.out.print("-> Indice frame atual: ");
+			System.out.println(indiceFramePCB);
+			System.out.println("------------------------------------");
+			System.out.println("\n");
+		}
+		
+		public void printDebugEscalonador(PCB pcb) {
+			System.out.println("\n");
+			System.out.println("---- DEBUG VALORES SALVOS NO PCB PARA O ESCALONADOR ----");
+			System.out.print("-> Frame atual: ");
+			System.out.println(pcb.tabelaPaginas[pcb.frameIndex]);
+			System.out.println("------------------------------------");
+			System.out.print("-> Indice frame atual: ");
+			System.out.println(pcb.frameIndex);
+			System.out.println("------------------------------------");
+			System.out.print("-> pcEscalonador: ");
+			System.out.println(pcb.pcEscalonador);
+			System.out.println("------------------------------------");
+			System.out.println("-> regEscalonador: ");
+				for (int i=0; i<(pcb.regEscalonador.length); i++) {
+					System.out.print("     - reg[");
+					System.out.print(i);
+					System.out.print("]: ");
+					System.out.println(pcb.regEscalonador[i]);
+				}
+			System.out.println(pcb.pcEscalonador);
+			System.out.println("------------------------------------");
+			System.out.println("\n");
 		}
 	}
 	// ------------------ C P U - fim
@@ -394,6 +532,11 @@ public class Sistema {
 		public int tamMem;
 		public Word[] m;
 		public CPU cpu;
+		public GerenteDeMemoria gerenteMemoria;
+		public GerenteDeProcessos gerenteProcessos;
+		public Escalonador escalonador;
+		
+		public boolean chaveamentoParaEscalonador = false;
 
 		public VM() {
 			// memoria
@@ -402,14 +545,21 @@ public class Sistema {
 			for (int i = 0; i < tamMem; i++) {
 				m[i] = new Word(Opcode.___, -1, -1, -1);
 			}
-			;
+	
 			// cpu
-			cpu = new CPU(m); // cpu acessa memÃƒÂ³ria
+			cpu = new CPU(m); // cpu acessa memoria
+			
+			// gerente de memoria
+			gerenteMemoria = new GerenteDeMemoria(tamMem);
+			
+			gerenteProcessos = new GerenteDeProcessos();
+			
+			escalonador = new Escalonador();
 		}
 	}
 
 	public enum Interrupt {
-		NULL, ENDERECO_INVALIDO, INSTRUCAO_INVALIDA, OVERFLOW, STOP
+		NULL, ENDERECO_INVALIDO, INSTRUCAO_INVALIDA, OVERFLOW, STOP, TIME_OUT
 	}
 
 	// ------------------- V M - fim
@@ -427,6 +577,7 @@ public class Sistema {
 
 	// ------------------------------------------- funcoes de um monitor
 	public class Monitor {
+				
 		public void dump(Word w) {
 			System.out.print("[ ");
 			System.out.print(w.opc);
@@ -449,21 +600,761 @@ public class Sistema {
 
 		public void carga(Word[] p, Word[] m) { // significa ler "p" de memoria secundaria e colocar na principal "m"
 			for (int i = 0; i < p.length; i++) {
-				m[i].opc = p[i].opc;
+				m[i].opc = p[i].opc;				// carga na antiga memoria, antes do gerente de memoria existir
 				m[i].r1 = p[i].r1;
 				m[i].r2 = p[i].r2;
 				m[i].p = p[i].p;
+			}	
+		}
+		
+		public void cargaFrames(Word[] p) {
+			int tamPagina = vm.gerenteMemoria.tamPag;
+			int tamTabelaPaginas = vm.gerenteMemoria.tamTabelaPaginas;
+			int incrementaIndexcomTamanhoPag = 0;
+			
+			for (int x=0; x<tamTabelaPaginas; x++) {
+				int cont = 0;
+				int j=0;
+			for (int i = incrementaIndexcomTamanhoPag; i<p.length; i++) {
+				int frameLidoDaTabela = vm.gerenteMemoria.tabelaPaginas[x];		
+				if (cont<tamPagina) {				
+					vm.gerenteMemoria.frames[frameLidoDaTabela].pagina[j].opc = p[i].opc;
+					vm.gerenteMemoria.frames[frameLidoDaTabela].pagina[j].r1 = p[i].r1;
+					vm.gerenteMemoria.frames[frameLidoDaTabela].pagina[j].r2 = p[i].r2;
+					vm.gerenteMemoria.frames[frameLidoDaTabela].pagina[j].p = p[i].p;
+					cont++;
+					j++;
+				} else {
+					// trocar o frame
+					incrementaIndexcomTamanhoPag+=tamPagina;
+					break;
+				}
 			}
+				
+			}
+			System.out.println("||");
+			System.out.println("||  ########## PROGRAMA CARREGADO NOS FRAMES ##########");
+			System.out.println("||");
 		}
 
-		public void executa() {
-			vm.cpu.setContext(0); // monitor seta contexto - pc aponta para inicio do programa
-			vm.cpu.run(); // e cpu executa
+		public void executa(int idPrograma, boolean escalonador) {
+			vm.cpu.setContext(idPrograma, escalonador); // monitor seta contexto - pc aponta para inicio do programa
+			vm.cpu.run(idPrograma, escalonador); // e cpu executa
 							// note aqui que o monitor espera que o programa carregado acabe normalmente
 							// nao ha protecoes... o que poderia acontecer ?
+
 		}
 
 	}
+	
+	public class Frame {
+		Word[] pagina;
+		
+		public Frame(int tamPag) {
+			pagina = new Word[tamPag];
+			for (int x = 0; x < tamPag; x++) {
+				pagina[x] = new Word(Opcode.___, -1, -1, -1);
+			}
+		}
+	}
+
+	public class GerenteDeMemoria {				
+			int tamMem;			
+			int tamPag = 16;
+			int tamFrame = tamPag;
+			int nroFrames = (tamMem/tamPag);
+			
+			int pcForFrames = 0;
+			int indexForFrames = 0;
+			
+			Word[] pagina;
+						
+			Frame[] frames;
+			
+			boolean[] framesBool; // if TRUE=ocupado, if FALSE=livre
+			
+			int[] tabelaPaginas;
+			int tamTabelaPaginas = 0;
+			
+			int framesLivres = 0;
+			boolean podeAlocar;
+			
+			int frameTraduzido;
+			int pagTraduzida;
+						
+			public GerenteDeMemoria(int tamMem) { 
+					this.tamMem = tamMem;
+					pagina = new Word[tamPag];
+					nroFrames = (tamMem/tamPag);
+					frames = new Frame[nroFrames];
+					framesBool = new boolean[nroFrames];
+					tabelaPaginas = new int[nroFrames];
+					tamTabelaPaginas = 0;
+					
+					for (int x = 0; x < tamPag; x++) {
+						pagina[x] = new Word(Opcode.___, -1, -1, -1);
+					}
+					
+					for (int x = 0; x < nroFrames; x++) {
+						frames[x] = new Frame(tamPag);
+					}
+				
+					for (int i = 0; i < nroFrames; i++) {
+						framesBool[i] = false;
+					}	
+					
+					for (int i = 0; i < nroFrames; i++) {
+						tabelaPaginas[i] = 0;
+					}
+					
+					framesNaoContinuosParaTeste();
+			}
+			
+			public void framesNaoContinuosParaTeste() {
+				for (int i = 0; i < 10; i++) {
+					framesBool[i] = true;
+				}
+				
+				framesBool[12] = true;
+				framesBool[14] = true;
+				framesBool[17] = true;
+				framesBool[21] = true;
+				
+				for (int i = 26; i < 30; i++) {
+					framesBool[i] = true;
+				}
+				for (int i = 40; i < 55; i++) {
+					framesBool[i] = true;
+				}
+			}
+			
+			public int[] aloca(int nroPalavras) {
+				
+				tabelaPaginas = new int[nroFrames];
+				for (int i = 0; i < nroFrames; i++) {
+					tabelaPaginas[i] = 0;
+				}
+				tamTabelaPaginas = 0;
+				
+				double localNroPalavras = nroPalavras;
+				
+				double nroPaginas = localNroPalavras/tamPag;
+				
+				if(nroPaginas>Math.floor(nroPaginas)) {
+					// SE FOR UM VALOR QUEBRADO, ARREDONDA PARA CIMA
+					nroPaginas = Math.ceil(nroPaginas);
+				} else {
+					// SE FOR UM VALOR INTEIRO NAO FAZ NADA
+				}
+
+				double nroFrames = nroPaginas;
+						
+				boolean verificaAlocacao = verificaSePodeAlocar(nroFrames);
+				podeAlocar = verificaAlocacao;
+				if(verificaAlocacao == true) {
+					
+					for(int i=0; i<nroFrames; i++) {
+						
+						if(framesBool[i] == true) { // se ocupado avanca no vetor
+							nroFrames++;
+						} else {
+							framesBool[i]=true;	// se livre, ocupa e adiciona na tabela de paginas
+
+							tabelaPaginas[tamTabelaPaginas] = i;
+							tamTabelaPaginas++;
+						}	
+					}
+					printaTerminalAlocacao(nroPalavras);
+					return tabelaPaginas;
+				} else {
+					printaTerminalAlocacao(nroPalavras);
+					System.exit(0);
+					return tabelaPaginas;
+				}	
+			}
+			
+			public void desaloca(int[] tabelaPaginas, int tamTabelaPaginas) {
+				
+				for (int i = 0; i < tamTabelaPaginas; i++) {
+					
+					framesBool[tabelaPaginas[i]] = false;
+					
+					for (int j=0; j<tamPag; j++) {
+						
+						frames[tabelaPaginas[i]].pagina[j] = new Word(Opcode.___, -1, -1, -1);
+					}
+				}
+				
+				//printaFrameBool();
+				
+			}
+			
+			public int contaFramesLivres() {
+				int contaFramesLivres = 0;
+				for (int i = 0; i < nroFrames; i++) {
+					if(framesBool[i] == false) {
+						contaFramesLivres++;
+						framesLivres = contaFramesLivres;
+					}	
+				}
+				return contaFramesLivres;
+			}
+			
+			public boolean verificaSePodeAlocar(double nroFrames) {
+				double framesLivres = contaFramesLivres();
+				
+				if((framesLivres-nroFrames) > 0) {
+					return true;
+				} else {
+					return false;
+				}	
+			}
+			
+			public void printaTerminalAlocacao(int nroPalavras) {
+				double localNroPalavras = nroPalavras;
+				double nroPaginas = localNroPalavras/tamPag;
+				
+				if(nroPaginas>Math.floor(nroPaginas)) {
+					// SE FOR UM VALOR QUEBRADO, ARREDONDA PARA CIMA
+					nroPaginas = Math.ceil(nroPaginas);
+				} else {
+					// SE FOR UM VALOR INTEIRO NAO FAZ NADA
+				}
+
+				double nroFrames = nroPaginas;	
+				
+				System.out.print("\n");
+				System.out.println("============== REQUISICAO DE ALOCACAO ==============");
+				
+				System.out.println("||");
+				System.out.print("|| -> Deseja-se alocar ");
+				System.out.print(nroPalavras);
+				System.out.println(" palavras;");
+				
+				System.out.println("||");
+				System.out.print("|| -> O tamanho atual da pagina eh de ");
+				System.out.print(tamPag);
+				System.out.println(" palavras;");
+				
+				System.out.print("||     -> Logo, precisa-se de ");
+				System.out.print(nroFrames);
+				System.out.println(" paginas;");
+				
+				System.out.println("||");
+				System.out.println("|| -> Cada frame tem exatamente 01 pagina;");
+				System.out.print("||     -> Logo, precisa-se de ");
+				System.out.print(nroFrames);
+				System.out.println(" frames;");
+				
+				System.out.println("||");
+				System.out.print("|| -> Dos ");
+				System.out.print(vm.gerenteMemoria.nroFrames);
+				System.out.println(" que o sistema dispoe:");
+				
+				System.out.print("||     -> ");
+				System.out.print(framesLivres);
+				System.out.println(" esta(o) livre(s);");
+				
+				if(podeAlocar==true){
+					System.out.println("||");
+					System.out.println("|| -> REQUISICAO DE ALOCACAO AUTORIZADA!");
+				} else {
+					System.out.print("||");
+					System.out.println("|| -> REQUISICAO DE ALOCACAO NEGADA");
+				}
+				
+				System.out.println("||");
+				System.out.println("|| -> Tabela de Paginas gerada:");
+				printaTabelaPaginas(tamTabelaPaginas);
+				
+				System.out.print("||");
+				System.out.println("=============================================");
+				System.out.print("\n");
+				System.out.print("\n");
+			}
+			
+			public void printaFrameBool() {
+				for(int i=0; i<nroFrames ; i++) {
+					System.out.print("[");
+					System.out.print(i);
+					System.out.print("] :");
+					System.out.println(framesBool[i]);
+				}
+			}
+ 			
+			public void printaFrames() {
+				System.out.print("\n");
+				System.out.println("============== DUMP DE TODOS OS FRAMES DO SISTEMA ==============");
+				System.out.println("||");
+				for(int i=0; i<frames.length; i++) {
+					System.out.print("|| ------------- FRAME[");
+					System.out.print(i);
+					System.out.println("] -------------");
+					for(int j=0; j<tamPag; j++) {
+						System.out.print("||   ");
+						System.out.print(vm.gerenteMemoria.frames[i].pagina[j].opc); 
+						System.out.print("  ");
+						System.out.print(vm.gerenteMemoria.frames[i].pagina[j].r1); 
+						System.out.print(" ");
+						System.out.print(vm.gerenteMemoria.frames[i].pagina[j].r2); 
+						System.out.print(" ");
+						System.out.println(vm.gerenteMemoria.frames[i].pagina[j].p);
+					}
+					System.out.println("|| ------------------------------------");
+				}
+				System.out.println("=============================================");
+			}
+			
+			public void printaFramesDaTabelaPaginas() {
+				System.out.println("\n");
+				for(int i=0; i<tamTabelaPaginas ; i++) {
+					System.out.print("---------------- FRAME[");
+					System.out.print(tabelaPaginas[i]);
+					System.out.println("] ----------------");
+					for(int j=0; j<tamPag; j++) {
+						System.out.print("   [");
+						System.out.print(j);
+						System.out.print("] ");
+						System.out.print(vm.gerenteMemoria.frames[tabelaPaginas[i]].pagina[j].opc); 
+						System.out.print("  ");
+						System.out.print(vm.gerenteMemoria.frames[tabelaPaginas[i]].pagina[j].r1); 
+						System.out.print(" ");
+						System.out.print(vm.gerenteMemoria.frames[tabelaPaginas[i]].pagina[j].r2); 
+						System.out.print(" ");
+						System.out.println(vm.gerenteMemoria.frames[tabelaPaginas[i]].pagina[j].p);
+					}
+					System.out.println("\n");
+				}
+			}
+			
+			public void printaTabelaPaginas(int n) {
+				System.out.println("||     --------------");
+				System.out.println("||     | PG | FRAME |");
+				System.out.println("||     --------------");
+				for(int i=0; i<n ; i++) {	
+					
+					System.out.print("||     | ");
+					System.out.print(i);
+					System.out.print(" |   ");
+					System.out.print(tabelaPaginas[i]);
+					System.out.println("   |");
+					System.out.println("||     --------------");
+				}
+			}
+			
+			public Word traduzEndereco(int logicAddress, String opType, PCB pcbPrograma) {
+				int p = logicAddress/tamPag;
+				int offset = logicAddress%tamPag;
+				int tabelaNro = pcbPrograma.tabelaPaginas[p];
+				Word wordNaPosEfetiva = vm.gerenteMemoria.frames[tabelaNro].pagina[offset];
+				int effectiveAddress = (pcbPrograma.tabelaPaginas[p]*tamFrame) + offset;
+				
+				setFrameTraduzido(tabelaNro);
+				setPagTraduzida(offset);
+	
+				switch (opType) {	// DAM = "Doesn't Access Memory"
+									// AM = "Access Memory"
+									// JMP = Jump
+				
+					case "AM":
+						//printDebugTraducao(logicAddress, p, offset, tabelaNro, wordNaPosEfetiva, effectiveAddress);
+						return wordNaPosEfetiva;
+						
+					case "JMP":
+						mudaPC(p, offset, pcbPrograma);
+						return wordNaPosEfetiva;
+						
+					default:
+						break;
+				}
+				
+				return wordNaPosEfetiva;
+			}
+			
+			public void setFrameTraduzido(int tabelaNro) {
+				frameTraduzido = tabelaNro;
+			}
+			
+			public int getFrameTraduzido() {
+				return frameTraduzido;	
+			}
+			
+			public void setPagTraduzida(int offset) {
+				pagTraduzida = offset;
+			}
+			
+			public int getPagTraduzida() {
+				return pagTraduzida;
+			}
+			
+			
+			public void printDebugTraducao(int logicAddress, int p, int offset, int tabelaNro, Word wordNaPosEfetiva, int effectiveAddress) {
+				System.out.print("\n");
+				System.out.println("---- DEBUG TRADUCAO ----");
+				System.out.print("-> Endereco a ser traduzido: ");
+				System.out.println(logicAddress);
+				System.out.print("-> Traduzido para: ");
+				System.out.println(effectiveAddress);
+				System.out.println("-> Endereco encontra-se: ");
+				System.out.print("     -> Frame: ");
+				System.out.println(tabelaNro);
+				System.out.print("     -> Linha: ");
+				System.out.print(offset);
+				System.out.println("  (conta a partir de 0)");
+				
+				System.out.print("-> Conteudo da posicao traduzida: ");
+				System.out.print(wordNaPosEfetiva.opc);
+				System.out.print(" ");
+				System.out.print(wordNaPosEfetiva.r1);
+				System.out.print(" ");
+				System.out.print(wordNaPosEfetiva.r2);
+				System.out.print(" ");
+				System.out.println(wordNaPosEfetiva.p);
+				System.out.println("------------------------");
+				System.out.print("\n");
+			}
+			
+			
+	}
+	
+	public class PCB {
+		int id;
+		int pcRuntime;
+		int pcEscalonador;
+		int[] regEscalonador;
+		int frameIndex;
+		String estado;
+		int prioridade = 1;
+		int[] tabelaPaginas;
+		int tamTabelaPaginas;
+		int tamPag;
+		
+	}
+	
+	// Gerente de Processos
+	public class GerenteDeProcessos {
+		
+		public PCB pcb;
+		
+		int nroProcessos = 0;
+		int tamProcesso;
+		List<PCB> listaTodosProcessos = new ArrayList<PCB>();
+		List<PCB> filaProcessosRodando = new ArrayList<PCB>();
+		List<PCB> filaProcessosProntos = new ArrayList<PCB>();
+		List<PCB> filaProcessosBloquados = new ArrayList<PCB>();
+		
+		public boolean criaProcesso(Word[] programa) {
+			System.out.print("\n");
+			System.out.print("\n");
+			System.out.println("=============== CRIANDO UM NOVO PROCESSO ===============");
+			System.out.println("||");
+			System.out.println("|| -> Comunicando-se com o Gerente de Memoria.....");
+			System.out.println("||");
+			System.out.println("|| -> Enviando requisicao de alocacao.....");
+			System.out.println("||");
+			
+			// cria PCB
+			pcb = new PCB();
+			
+			// verifica tamanho
+			tamProcesso = getTamProcesso(programa);
+			
+			// pede aloca��o de mem ao GM
+				// se nao tem mem retorna false
+			pcb.tabelaPaginas = vm.gerenteMemoria.aloca(tamProcesso);
+			pcb.tamTabelaPaginas = vm.gerenteMemoria.tamTabelaPaginas;
+			pcb.tamPag = vm.gerenteMemoria.tamPag;
+			
+			
+			// carrega o programa nos frames alocados
+			System.out.println("||");
+			System.out.println("|| -> Carregando o programa nos frames.....");
+			System.out.println("||");
+			monitor.cargaFrames(programa);
+			System.out.println("||");
+			System.out.println("|| -> Gerando listas de processos.....");
+			System.out.println("||");
+			
+			// seta demais parametros do PCB (id, pc=0, etc)
+			pcb.id = nroProcessos++;
+			pcb.pcRuntime = 0;
+			pcb.pcEscalonador = 0;
+			pcb.regEscalonador = new int[10];
+			for(int i=0; i<pcb.regEscalonador.length; i++) {
+				pcb.regEscalonador[i] = 0;
+			}
+			pcb.frameIndex = 0;
+			
+			// coloca PCB na fila de prontos
+			   listaTodosProcessos.add(pcb);
+			   filaProcessosProntos.add(pcb);
+			   pcb.estado = "pronto";
+			
+			   printaTodasListas();
+			   
+			   System.out.println("||");
+			   System.out.println("|| -> Novo processo criado com sucesso!");
+			   System.out.println("||");
+			   System.out.println("============================================");
+			   
+			return true;
+		}
+		
+		public void desalocaProcesso(int idProcesso) {
+			PCB pcbPrograma = getPCBForID(idProcesso);
+			vm.gerenteMemoria.desaloca(pcbPrograma.tabelaPaginas, pcbPrograma.tamTabelaPaginas);
+			listaTodosProcessos.remove(pcbPrograma);
+			filaProcessosRodando.remove(pcbPrograma);
+			filaProcessosProntos.remove(pcbPrograma);
+			filaProcessosBloquados.remove(pcbPrograma);
+		}
+		
+	public int getTamProcesso (Word[] programa) {
+		int tam = programa.length;
+		return tam;
+	}
+	
+	public int getNroProcessos() {
+		return nroProcessos;
+	}
+	
+	public PCB getPCBForID(int id) {
+			PCB pcbDesejado = new PCB();
+			boolean processoEstaNaLista = false;
+		for(int i=0; i<listaTodosProcessos.size(); i++) {
+			if (listaTodosProcessos.get(i).id == id) {
+				pcbDesejado = listaTodosProcessos.get(i);
+				processoEstaNaLista = true;
+				return pcbDesejado;
+			} else {
+				// TRATAR ERRO
+				processoEstaNaLista = false;
+			}
+		}
+		if (processoEstaNaLista == false) {
+			System.out.println("-------> Nenhum processo foi encontrado para o ID fornecido");
+		}
+		
+		return pcbDesejado;
+	}
+
+	public void printaFramesDaTabelaPaginasDoProcesso(int idProcesso) {
+		PCB pcbDoProcesso = getPCBForID(idProcesso);
+		int[] tabelaPaginasDoProcesso = pcbDoProcesso.tabelaPaginas;
+		int tamTabelaPaginasDoProcesso = pcbDoProcesso.tamTabelaPaginas;
+		int tamPag = vm.gerenteMemoria.tamPag;
+		
+		System.out.println("||");
+		for(int i=0; i<tamTabelaPaginasDoProcesso ; i++) {
+			System.out.print("|| --------- FRAME[");
+			System.out.print(tabelaPaginasDoProcesso[i]);
+			System.out.println("] ---------");
+			for(int j=0; j<tamPag; j++) {
+				System.out.print("||   [");
+				System.out.print(j);
+				System.out.print("] ");
+				System.out.print(vm.gerenteMemoria.frames[tabelaPaginasDoProcesso[i]].pagina[j].opc); 
+				System.out.print("  ");
+				System.out.print(vm.gerenteMemoria.frames[tabelaPaginasDoProcesso[i]].pagina[j].r1); 
+				System.out.print(" ");
+				System.out.print(vm.gerenteMemoria.frames[tabelaPaginasDoProcesso[i]].pagina[j].r2); 
+				System.out.print(" ");
+				System.out.println(vm.gerenteMemoria.frames[tabelaPaginasDoProcesso[i]].pagina[j].p);
+			}
+			System.out.println("||");
+		}
+	}
+	
+	public void printaTabelaPaginas(int idProcesso) {
+		PCB pcbPograma = getPCBForID(idProcesso);
+		int[] tabelaPaginasPCB =  pcbPograma.tabelaPaginas;
+		int tamTabelaPaginasPCB = pcbPograma.tamTabelaPaginas;
+			System.out.println("     --------------");
+			System.out.println("     | PG | FRAME |");
+			System.out.println("     --------------");
+			for(int i=0; i<tamTabelaPaginasPCB ; i++) {	
+				
+				System.out.print("     | ");
+				System.out.print(i);
+				System.out.print(" |   ");
+				System.out.print(tabelaPaginasPCB[i]);
+				System.out.println("   |");
+				System.out.println("     --------------");
+			}
+		
+	}
+	
+	public void setParametrosIniciaisAoFinalizarCompletamentePrograma(int idProcesso, boolean escalonador) {
+		PCB pcbPrograma = getPCBForID(idProcesso);
+		
+		filaProcessosRodando.remove(pcbPrograma);
+		filaProcessosProntos.add(pcbPrograma);
+		printaTodasListas();
+		
+		if (escalonador==true) {
+			vm.gerenteProcessos.desalocaProcesso(idProcesso);
+			System.out.print("\n");
+			System.out.print("\n");
+			System.out.println("=============== APOS DESALOCACAO ===============");
+			System.out.print("\n");
+			System.out.print("\n");
+			printaTodasListas();
+			
+			vm.escalonador.continuaExecucao();
+		} else {
+			pcbPrograma.pcRuntime = 0;
+			pcbPrograma.pcEscalonador = 0;
+			for(int i=0; i<pcb.regEscalonador.length; i++) {
+				pcb.regEscalonador[i] = 0;
+			}
+			pcbPrograma.frameIndex = 0;
+		}
+	}
+	
+	public void printaTodasListas() {
+		System.out.println("=============== LISTAS DE PROCESSOS POR ID ===============");
+		System.out.print("|| -> Todos processos: ");
+		for(int i=0; i<listaTodosProcessos.size(); i++) {
+			System.out.print(listaTodosProcessos.get(i).id);
+			System.out.print("  ");
+		}
+		System.out.print("\n");
+		System.out.print("|| -> Rodando: ");
+		for(int i=0; i<filaProcessosRodando.size(); i++) {
+			System.out.print(filaProcessosRodando.get(i).id);
+			System.out.print("  ");
+		}
+		System.out.print("\n");
+		System.out.print("|| -> Prontos: ");
+		for(int i=0; i<filaProcessosProntos.size(); i++) {
+			System.out.print(filaProcessosProntos.get(i).id);
+			System.out.print("  ");
+		}
+		System.out.print("\n");
+		System.out.print("|| -> Bloquados: ");
+		for(int i=0; i<filaProcessosBloquados.size(); i++) {
+			System.out.print(filaProcessosBloquados.get(i).id);
+			System.out.print("  ");
+		}
+		System.out.print("\n");
+		System.out.println("========================================================");
+		
+	}
+	
+	public boolean programaEstaNaLista(List<PCB> lista, int idProcesso) {
+		PCB pcbPograma = getPCBForID(idProcesso);
+		if (lista.contains(pcbPograma)) {
+			return true;
+		} else {
+			System.out.println("------------> Esta tentando remover da fila um elemento que nao esta nela");
+			return false;
+		}
+	}
+
+	
+	public void dumpID(PCB pcb) {
+		System.out.println("=============== DUMP PCB ===============");
+		System.out.println("||");
+		System.out.print("|| -> ID: ");
+		System.out.println(pcb.id);
+		
+		System.out.print("|| -> PC: ");
+		System.out.println(pcb.pcRuntime);
+		
+		System.out.print("|| -> Estado: ");
+		System.out.println(pcb.estado);
+		
+		System.out.print("|| -> Prioridade: ");
+		System.out.println("FALTA SETAR");
+		
+		System.out.println("|| -> Tabela de Paginas: ");
+		
+		System.out.println("||     --------------");
+		System.out.println("||     | PG | FRAME |");
+		System.out.println("||     --------------");
+		for(int i=0; i<pcb.tamTabelaPaginas; i++) {	
+		
+			System.out.print("||     | ");
+			System.out.print(i);
+			System.out.print(" |   ");
+			System.out.print(pcb.tabelaPaginas[i]);
+			System.out.println("   |");
+			System.out.println("||     --------------");
+		}
+		System.out.println("||");
+		
+		System.out.println("|| -> Conteudo dos frames de memoria desse processo: ");
+		
+		for(int i=0; i<pcb.tamTabelaPaginas ; i++) {
+			System.out.print("||   ---------------- FRAME[");
+			System.out.print(pcb.tabelaPaginas[i]);
+			System.out.println("] ----------------");
+			for(int j=0; j<pcb.tamPag; j++) {
+				System.out.print("||   [");
+				System.out.print(j);
+				System.out.print("] ");
+				System.out.print(vm.gerenteMemoria.frames[pcb.tabelaPaginas[i]].pagina[j].opc); 
+				System.out.print("  ");
+				System.out.print(vm.gerenteMemoria.frames[pcb.tabelaPaginas[i]].pagina[j].r1); 
+				System.out.print(" ");
+				System.out.print(vm.gerenteMemoria.frames[pcb.tabelaPaginas[i]].pagina[j].r2); 
+				System.out.print(" ");
+				System.out.println(vm.gerenteMemoria.frames[pcb.tabelaPaginas[i]].pagina[j].p);
+			}
+			System.out.println("||");
+		}
+		
+		System.out.println("==========================================");
+	}
+	
+		
+	}
+	
+	// Escalonador
+	public class Escalonador {	// MARCO 2
+		
+		int idProgExecutando = 666; //valor nao nulo mas conhecido
+		int contInst = 0;
+		
+		int nroMaxCiclosCPU = 10;
+		
+		public void escalonaRandom() {
+			if(vm.gerenteProcessos.filaProcessosProntos.isEmpty()) {
+				printErroFilaVazia();
+				
+			}
+			
+			Random gerador = new Random();
+			
+			int numAleatorio = gerador.nextInt(vm.gerenteProcessos.filaProcessosProntos.size());
+						
+			idProgExecutando = vm.gerenteProcessos.filaProcessosProntos.get(numAleatorio).id;
+			
+			//System.out.println(idProgExecutando);
+		}
+		
+		public void executaEscalonador() {
+			contInst = 0;
+			monitor.executa(idProgExecutando, true);
+		}
+		
+		public void continuaExecucao() {
+			escalonaRandom();
+			executaEscalonador();
+		}
+		
+		public void printErroFilaVazia() {
+			System.out.print("\n");
+			System.out.print("\n");
+			System.out.print(">>> ERROR: Nenhum processo na fila de prontos!");
+			System.out.print("\n");
+			System.out.print("\n");
+			System.exit(0);
+		}
+		
+	}
+	
+	
 	// -------------------------------------------
 
 	// -------------------------------------------------------------------------------------------------------
@@ -472,21 +1363,35 @@ public class Sistema {
 
 	public VM vm;
 	public Monitor monitor;
+	
 	public static Programas progs;
+	
+	Word[] programa = null;
+	String programaString = "";
 
 	public Sistema() { // a VM com tratamento de interrupcoes
 		vm = new VM();
 		monitor = new Monitor();
+		
 		progs = new Programas();
+					
 	}
 
-	public void roda(Word[] programa) {
-		monitor.carga(programa, vm.m);
+	public void roda() {
+		while (true) {
+		printInterfaceInterativa();
+		}
+		//vm.gerenteMemoria.aloca(programa.length); // Requisicao de alocacao
+		/*
+		System.out.println("---------------------------------- programa alocado ");
+		//monitor.carga(programa, vm.m);
+		//monitor.cargaFrames(programa);
 		System.out.println("---------------------------------- programa carregado ");
-		monitor.dump(vm.m, 0, programa.length);
-		monitor.executa();
+		//monitor.dump(vm.m, 0, programa.length);
+		//monitor.executa();
 		System.out.println("---------------------------------- apos execucao ");
-		monitor.dump(vm.m, 0, programa.length);
+		//monitor.dump(vm.m, 0, programa.length);
+		vm.gerenteMemoria.printaFramesDaTabelaPaginas();*/
 	}
 
 	public int leInteiro() {
@@ -508,14 +1413,23 @@ public class Sistema {
 		System.out.print("\n");
 	}
 
-	public void trataInterrupcao(Interrupt interrupt) {
+	public void trataInterrupcao(Interrupt interrupt, int idPrograma, boolean escalonador) {
+		
+		PCB pcb = vm.gerenteProcessos.getPCBForID(idPrograma);
+		
 		switch (interrupt) {
 			case STOP:
-				System.out.print("\n");
-				System.out.print("\n");
-				System.out.println(">>> System Interruption: FINAL DO PROGRAMA <<<");
-				System.out.print("\n");
-				System.out.print("\n");
+				System.out.println("||");
+				System.out.println("||");
+				System.out.println("||  >>> System Interruption: FINAL DO PROGRAMA <<<");
+				System.out.println("||");
+				System.out.println("||");
+				
+				System.out.println("||");
+				System.out.println("||   ########## FINAL DA EXECUCAO ##########");
+				System.out.println("||");
+				
+				vm.gerenteProcessos.setParametrosIniciaisAoFinalizarCompletamentePrograma(idPrograma, escalonador);
 				break;
 			case ENDERECO_INVALIDO:
 				System.out.print("\n");
@@ -538,27 +1452,85 @@ public class Sistema {
 				System.out.print("\n");
 				System.out.print("\n");
 				break;
+			case TIME_OUT:
+				System.out.print("\n");
+				System.out.print("\n");
+				System.out.println(">>> System Interruption: TIME_OUT <<<");
+				System.out.print("\n");
+				System.out.print("\n");
+				vm.gerenteProcessos.filaProcessosRodando.remove(pcb);
+				vm.gerenteProcessos.filaProcessosProntos.add(pcb);
+				vm.gerenteProcessos.printaTodasListas();
+				
+				for(int i=0; i<pcb.regEscalonador.length; i++) {
+				pcb.regEscalonador[i] = vm.cpu.reg[i];
+				}
+				
+				vm.escalonador.continuaExecucao();
+				break;
 			default:
 				// System.out.println("NO INTERRUPTION");
 				break;
 		}
 	}
 	
+public void checaPC(int pc, PCB pcbPrograma) {
+	//int tamPagina = vm.gerenteMemoria.tamPag;
+	int tamPagina = pcbPrograma.tamPag;
+
+	if(pc>=tamPagina) {
+		//System.out.print("entrei");
+		//vm.gerenteMemoria.pcForFrames = 0;
+		pcbPrograma.pcRuntime = 0;
+		vm.gerenteMemoria.indexForFrames++;
+		pcbPrograma.frameIndex++;
+		vm.cpu.setContext(pcbPrograma.id, false); 
+	}
+	//printDebugChecaPC(pc);	
+}
+
+public void printDebugChecaPC(int pc) {
+	System.out.print("\n");
+	System.out.println("---- DEBUG CHECK PC ----");
+	System.out.print("-> PC interno da funcao: ");
+	System.out.println(pc);	
+	System.out.print("-> PC real da cpu: ");
+	System.out.println(vm.cpu.pc);
+	System.out.println("------------------------");
+	System.out.print("\n");
+}
+
+public void mudaPC(int frame, int offset, PCB pcbPrograma) {
+	//vm.gerenteMemoria.pcForFrames = offset;
+	pcbPrograma.pcRuntime = offset;
+	vm.gerenteMemoria.indexForFrames = frame;
+	pcbPrograma.frameIndex = frame;
+	vm.cpu.setContext(pcbPrograma.id, false);
+}
+	
 public void chamaSistema() {
 	
 	CPU cpuAccess = vm.cpu;
+	PCB pcbDesejado = vm.gerenteProcessos.getPCBForID(1);
+	
+	vm.gerenteMemoria.traduzEndereco(cpuAccess.reg[9], "AM", pcbDesejado);
+	int frameTraduzido = vm.gerenteMemoria.getFrameTraduzido();
+	int pagTraduzida = vm.gerenteMemoria.getPagTraduzida();
 	
 	if (cpuAccess.reg[8] == 1) { // IN
 		int valorLido = leInteiro(); // Chama o metodo que le um inteiro do teclado
 		if (valorLido >= -10000 && valorLido <= 10000) { // Verifica se esta dentro do range valido
-			cpuAccess.m[cpuAccess.reg[9]].p = valorLido; // Coloca o valor lido no endereco de mem. armazenado no reg. 9
+			
+			vm.gerenteMemoria.frames[frameTraduzido].pagina[pagTraduzida].p = valorLido;
+			//cpuAccess.m[cpuAccess.reg[9]].p = valorLido; // Coloca o valor lido no endereco de mem. armazenado no reg. 9
 			cpuAccess.pc++;
 		} else {
 			interrupt = Interrupt.OVERFLOW; // Se estiver fora do range interrompe por overflow
 		}
 
 	} else if (cpuAccess.reg[8] == 2) { // OUT
-		int valorOut = cpuAccess.m[cpuAccess.reg[9]].p; // O endereco de mem. cujo valor deve-se escrever na tela esta
+		int valorOut = vm.gerenteMemoria.frames[frameTraduzido].pagina[pagTraduzida].p;
+		//int valorOut = cpuAccess.m[cpuAccess.reg[9]].p; // O endereco de mem. cujo valor deve-se escrever na tela esta
 									// armazenado no reg. 9
 		escreveIntTela(valorOut); // Chama o metodo que escreve um inteiro na tela
 		cpuAccess.pc++;
@@ -566,6 +1538,157 @@ public void chamaSistema() {
 		// Caso hajam novas chamadas de sistema
 	}
 		
+}
+
+public void printInterfaceInterativa() {
+	Scanner ler = new Scanner(System.in);
+	System.out.println("\n");
+	System.out.println("\n");
+	System.out.println("\n");
+	System.out.println("===================== INTERFACE DE PROCESSOS =====================");
+	System.out.println("||");
+	System.out.println("|| -> O que vc deseja fazer?");
+	System.out.println("||");
+	System.out.println("||       (1) Criar um novo processo;");
+	System.out.println("||       (2) Executar um processo existente;");
+	System.out.println("||       (3) Listar o conteudo do PCB e o conteudo de cada frame de memoria de um processo especifico;");
+	System.out.println("||       (4) Listar todos os frames de memoria do sistema;");
+	System.out.println("||       (5) Excluir um processo especifico;");
+	System.out.println("||       (6) Printar todas as listas de processos;");
+	System.out.println("||");
+	System.out.println("||");
+	System.out.println("||");
+	System.out.println("||       (7) Executar com escalonador;");
+	System.out.println("||");
+	System.out.print("||       -> ");
+	int valorLido = ler.nextInt();
+	System.out.println("||");
+	System.out.println("==================================================================");
+	
+	processaComandoLido(valorLido);
+}
+
+public void processaComandoLido(int comando) {
+		
+	switch (comando) {
+	case 1:
+		printaInterfaceEscolhaNovoPrograma();
+		this.programa = escolhePrograma(programaString);
+		vm.gerenteProcessos.criaProcesso(this.programa);
+		break;
+		
+	case 2:
+		int idPrograma = getProgamaUsuarioGostariaDeExecutar();
+		vm.chaveamentoParaEscalonador = false;
+		monitor.executa(idPrograma, false);
+		
+		System.out.println("||");
+		System.out.println("||   ########## FRAMES DO PROGRAMA APOS EXECUCAO ##########");
+		System.out.println("||");
+		
+		vm.gerenteProcessos.printaFramesDaTabelaPaginasDoProcesso(idPrograma);
+		
+		System.out.println("======================================");
+		
+		break;
+		
+	case 3:
+		int idInserido = printaInterfaceInsercaoID();
+		for(int i=0; i<vm.gerenteProcessos.listaTodosProcessos.size(); i++) {
+			if (vm.gerenteProcessos.listaTodosProcessos.get(i).id == idInserido) {
+				vm.gerenteProcessos.dumpID(vm.gerenteProcessos.listaTodosProcessos.get(i));
+			}
+		}
+		break;
+		
+	case 4:
+		vm.gerenteMemoria.printaFrames();
+		break;
+		
+	case 5:
+		int idDesaloca = printaInterfaceInsercaoID();
+		PCB pcbPrograma = vm.gerenteProcessos.getPCBForID(idDesaloca);
+		vm.gerenteMemoria.desaloca(pcbPrograma.tabelaPaginas, pcbPrograma.tamTabelaPaginas);
+		break;
+		
+	case 6:
+		vm.gerenteProcessos.printaTodasListas();
+		break;
+	case 7:
+		vm.chaveamentoParaEscalonador = true;
+		vm.escalonador.escalonaRandom();
+		vm.escalonador.executaEscalonador();		// MARCO
+		
+		System.out.print("ID do prog executado: ");
+		System.out.println(vm.escalonador.idProgExecutando);
+		
+		
+		break;
+	default:
+		System.out.println("|| -> ATENCAO: Selecione uma das opcoes da lista");
+		break;
+	}
+}
+
+public void printaInterfaceEscolhaNovoPrograma() {
+	Scanner ler = new Scanner(System.in);
+	System.out.print("|| -> Para qual programa vc gostaria de criar um processo? ");
+	String nomePrograma = ler.nextLine();
+	System.out.println("==================================================================");
+	this.programaString = nomePrograma;
+}
+
+public int getProgamaUsuarioGostariaDeExecutar() {
+	Scanner ler = new Scanner(System.in);
+	System.out.print("|| -> Informe a id do processo que deseja executar: ");
+	int idPrograma = ler.nextInt();
+	return idPrograma;
+}
+
+public Word[] escolhePrograma(String nomePrograma) {
+	Word[] programaEscolhido = progs.progMinimo;
+	
+	switch(nomePrograma) {
+	case "fibonacci10":
+		programaEscolhido = progs.fibonacci10;
+		break;
+	case "progMinimo":
+		programaEscolhido = progs.progMinimo;
+		break;
+	case "fatorial":
+		programaEscolhido = progs.fatorial;
+		break;
+	case "NewInstructionTester":
+		programaEscolhido = progs.NewInstructionTester;
+		break;
+	case "PA":
+		programaEscolhido = progs.PA;
+		break;
+	case "PB":
+		programaEscolhido = progs.PB;
+		break;
+	case "PC":
+		programaEscolhido = progs.PC;
+		break;
+	case "InterruptionTester":
+		programaEscolhido = progs.InterruptionTester;
+		break;
+	case "SystemCallTester":
+		programaEscolhido = progs.SystemCallTester;
+		break;
+	default:
+		System.out.println("################ O PROGRAMA ESCOLHIDO NAO CONSTA NO SISTEMA ################");
+		System.exit(0);
+	}
+	return programaEscolhido;
+}
+
+public int printaInterfaceInsercaoID() {
+	Scanner ler = new Scanner(System.in);
+	System.out.print("|| -> Insira o ID do processo: ");
+	int id = ler.nextInt();
+	System.out.println("==================================================================");
+	return id;
 }
 
 	// ------------------- S I S T E M A - fim
@@ -576,16 +1699,25 @@ public void chamaSistema() {
 	// ------------------- instancia e testa sistema
 	public static void main(String args[]) {
 		Sistema s = new Sistema();
+		
+		s.roda();
+		
 		// s.roda(progs.fibonacci10); // "progs" significa acesso/referencia ao programa
 		// em memoria secundaria
-		// s.roda(progs.progMinimo);
-		// s.roda(progs.fatorial);
+		//s.roda(progs.progMinimo);
+		//s.roda(progs.fatorial);
 		// s.roda(progs.NewInstructionTester);
-		// s.roda(progs.PA);
-		// s.roda(progs.PB);
-		// s.roda(progs.PC);
+		//s.roda(progs.PA);
+		//s.roda(progs.PB);
+		//s.roda(progs.PC);
 		//s.roda(progs.InterruptionTester);
-		s.roda(progs.SystemCallTester);
+		//s.roda(progs.SystemCallTester);
+		
+		//s.gerenteMemoria.aloca(150);
+		//s.gerenteMemoria.aloca(30);
+		//s.gerenteMemoria.aloca(10);
+		
+		
 
 	}
 	// -------------------------------------------------------------------------------------------------------
@@ -960,7 +2092,8 @@ public void chamaSistema() {
 				new Word(Opcode.STOP, -1, -1, -1) // 63
 		};
 
-		public Word[] SystemCallTester = new Word[] { new Word(Opcode.JMP, -1, -1, 9), // 0 // Inicia o prog. na pos. 9
+		public Word[] SystemCallTester = new Word[] { 
+				new Word(Opcode.JMP, -1, -1, 9), // 0 // Inicia o prog. na pos. 9
 																						// da mem.
 				// Area de dados
 				new Word(Opcode.DATA, -1, -1, -1), // 1 // Armazena input 1
